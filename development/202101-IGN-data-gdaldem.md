@@ -71,7 +71,7 @@ echo "0 255 255 255\n90 0 0 0" > gdaldem-color-slope-greyscale.conf
 gdaldem color-relief clapier_lamb_slope.tif gdaldem-color-slope-greyscale.conf clapier_slopeshade_greyscale.tif
 ```
 
-[!img/geo/clapier_slopeshade_greyscale.jpg]
+<img src="img/geo/clapier_slopeshade_greyscale.jpg" width="400">
 
 We can use slope palette from IGN:
 ```python
@@ -91,11 +91,12 @@ gdaldem-color-slope-ign.conf:
 ```bash
 gdaldem color-relief clapier_lamb_slope.tif gdaldem-color-slope-ign.conf clapier_slopeshade_ign.tif```
 ```
-[!img/geo/clapier_slopeshade_ign.jpg]
+
+<img src="img/geo/clapier_slopeshade_ign.jpg" width="400">
 
 And we can compare the result with the official IGN slope map on [geoportail.gouv.fr](https://www.geoportail.gouv.fr/carte?c=7.417854230209106,44.102449446150985&z=16&l0=GEOGRAPHICALGRIDSYSTEMS.MAPS:WMTS(1)&l1=GEOGRAPHICALGRIDSYSTEMS.SLOPES.MOUNTAIN::GEOPORTAIL:OGC:WMTS(0.59)&permalink=yes).
 
-[!img/geo/ign-vs-gdem.jpg]
+<img src="img/geo/ign-vs-gdem.jpg" width="700">
 
 Pretty close! IGN has the benefit of using the RGE ALTI 1m, soon to be opened as well...
 
@@ -119,5 +120,5 @@ Which I slightly tweaked in [gdaldem-color-slope-oslo.conf](data_geo/gdaldem-col
 gdaldem color-relief clapier_lamb_slope.tif gdaldem-color-slope-oslo.conf clapier_slopeshade_oslo.tif
 ```
 
-[!img/geo/clapier_slopeshade_oslo.jpg]
+<img src="img/geo/clapier_slopeshade_oslo.jpg" width="400">
 
