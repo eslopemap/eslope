@@ -39,7 +39,36 @@ The projection used for all these coordinates is "[Lambert 93](https://fr.wikipe
 
 There's some metadata in [IGNF.xml](https://librairies.ign.fr/geoportail/resources/IGNF.xml) (there's a copy in each archive) including bounding boxes for this projection: `<gml:ProjectedCRS gml:id="RGF93LAMB93"> ...`
 
-There's also a shape file in folder *3_SUPPLEMENTS_LIVRAISON_2020-11-00140*, which I suppose lets you load the full dataset in QGIS or using [gdal ESRI Shapefile / DBF](https://gdal.org/drivers/vector/shapefile.html) driver, but I haven't tried yet. Starting with a single file allows to iterate faster.
+There's also a shape, listing every tile's extent and source which should let you load the full dataset, e.g. in QGIS or using [gdal ESRI Shapefile / DBF](https://gdal.org/drivers/vector/shapefile.html) driver.
+
+``` bash
+ogrinfo  3_SUPPLEMENTS_LIVRAISON_2020-11-00140/RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D006_2020-09-15/source.shp
+INFO: Open of `source.shp'
+      using driver `ESRI Shapefile' successful.
+Layer name: source
+Metadata:
+  DBF_DATE_LAST_UPDATE=2020-11-10
+Geometry: Polygon
+Feature Count: 1324
+Extent: (989997.500000, 6270002.500000) - (1079997.500000, 6375002.500000)
+Layer SRS WKT:
+PROJCRS["RGF93_Lambert_93",
+     ...
+Data axis to CRS axis mapping: 1,2
+CODE: Integer (9.0)
+RESOLUTION: String (80.0)
+ORIGINE: String (80.0)
+PRECISION: String (80.0)
+
+OGRFeature(source):0
+  CODE (Integer) = 7
+  RESOLUTION (String) = 5 m
+  ORIGINE (String) = Radar
+  PRECISION (String) = 1 m < Emq < 7 m
+  POLYGON ((1014997.5 6315002.5,1019997.5 6315002.5,1019997.5 6310002.5,1014997.5 6310002.5,1014997.5 6315002.5))
+
+...
+```
 
 # GDAL setup
 
@@ -56,6 +85,8 @@ sudo apt install libgdal-dev
 ogrinfo --version  # 3.0.4
 pip install GDAL==3.0.4
 ```
+
+We'll start with a single file to iterate faster.
 
 GDAL understands our `.asc` file natively:
 ```bash
