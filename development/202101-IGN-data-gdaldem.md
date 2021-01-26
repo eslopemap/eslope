@@ -157,9 +157,11 @@ We can also use a more precise palette (useful for alpinism/ski-touring), like t
  50 ° -54 °  110   0 255    #6E00FF  purple
  55 ° -90 °    0   0 255    #0000FF  blue
 ```
-
-Which I slightly tweaked in [gdaldem-color-slope-oslo.conf](data_geo/gdaldem-color-slope-oslo.conf) to make it continuous:
+<img src="img/geo/oslo-colormap-palette.jpg" width="50">
 <img src="img/geo/oslo-colormap-gradient.jpg" width="400">
+
+Which I slightly tweaked above to make it continuous, in [gdaldem-color-slope-oslo.conf](data_geo/gdaldem-color-slope-oslo.conf). Let's use it:
+
 
 ```bash
 gdaldem color-relief clapier_lamb_slope.tif gdaldem-color-slope-oslo.conf clapier_slopeshade_oslo.tif
@@ -199,6 +201,7 @@ This maps could benefit from the more precise contour lines/relief:
 * OpenAndroMaps [Elevate](https://www.openandromaps.org/en/legend/elevate-mountain-hike-theme) based on [MapsForge](https://wiki.openstreetmap.org/wiki/Mapsforge)
 * OpenTopoMap (on [github](https://github.com/der-stefan/OpenTopoMap/tree/master/mapnik)) [2]
 * OpenHikingMap / [maps.refuges.info](https://wiki.openstreetmap.org/wiki/Hiking/mri)
+* ThunderForest Topo / OpenCycleMap / my.viewranger.com (private)
 * [MapTiler Topo](https://www.maptiler.com/maps/#topo) (based on OpenTilesMap but Topo is private)
 
 It could also directly be used as an [OruxMaps DEM file](https://www.oruxmaps.com/cs/en/blog/25-dem-files)
