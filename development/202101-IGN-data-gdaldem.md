@@ -199,7 +199,7 @@ This maps could benefit from the more precise contour lines/relief:
 
 * [OpenSlopeMap](https://www.openslopemap.org/projekt/hintergrundinformationen/)
 * OpenAndroMaps [Elevate](https://www.openandromaps.org/en/legend/elevate-mountain-hike-theme) based on [MapsForge](https://wiki.openstreetmap.org/wiki/Mapsforge)
-* OpenTopoMap (on [github](https://github.com/der-stefan/OpenTopoMap/tree/master/mapnik)) [2]
+* OpenTopoMap (on [github](https://github.com/der-stefan/OpenTopoMap/tree/master/mapnik))
 * OpenHikingMap / [maps.refuges.info](https://wiki.openstreetmap.org/wiki/Hiking/mri)
 * ThunderForest Topo / OpenCycleMap / my.viewranger.com (private)
 * [MapTiler Topo](https://www.maptiler.com/maps/#topo) (based on OpenTilesMap but Topo is private)
