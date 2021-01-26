@@ -146,19 +146,20 @@ Pretty close! IGN has the benefit of using the RGE ALTI 1m, soon to be opened as
 
 We can also use a more precise palette (useful for alpinism/ski-touring), like the one from OpenSlopeMap:
 ```python
-  min   max    R   G   B       HTML
-  0 °  -9 °    0   0   0    #FFFFFF
- 10 ° -29 °    0 255   0    #00FF00
- 30 ° -34 °  240 225   0    #F0E100
- 35 ° -39 °  255 155   0    #FF9B00
- 40 ° -42 °  255   0   0    #FF0000
- 43 ° -45 °  255  38 255    #FF26FF
- 46 ° -49 °  167  25 255    #A719FF
- 50 ° -54 °  110   0 255    #6E00FF
- 55 ° -90 °    0   0 255    #0000FF
+  min   max    R   G   B       HTML  color
+  0 °  -9 °    0   0   0    #FFFFFF  white
+ 10 ° -29 °    0 255   0    #00FF00  green
+ 30 ° -34 °  240 225   0    #F0E100  yellow
+ 35 ° -39 °  255 155   0    #FF9B00  orange
+ 40 ° -42 °  255   0   0    #FF0000  red
+ 43 ° -45 °  255  38 255    #FF26FF  magenta
+ 46 ° -49 °  167  25 255    #A719FF  violet
+ 50 ° -54 °  110   0 255    #6E00FF  purple
+ 55 ° -90 °    0   0 255    #0000FF  blue
 ```
 
-Which I slightly tweaked in [gdaldem-color-slope-oslo.conf](data_geo/gdaldem-color-slope-oslo.conf)
+Which I slightly tweaked in [gdaldem-color-slope-oslo.conf](data_geo/gdaldem-color-slope-oslo.conf) to make it continuous:
+<img src="img/geo/oslo-colormap-gradient.jpg" width="400">
 
 ```bash
 gdaldem color-relief clapier_lamb_slope.tif gdaldem-color-slope-oslo.conf clapier_slopeshade_oslo.tif
@@ -169,7 +170,7 @@ gdaldem color-relief clapier_lamb_slope.tif gdaldem-color-slope-oslo.conf clapie
 
 # Projection conversion
 
-If we want to put our new overlay online, we are going to need to get it to a more standard projection, WGS84. We'll need to tell gdal that what we've been using all this time is Lambert93, a.k.a EPSG:2154 (as pointed out by [GDAL-OGR](https://gdal.gloobe.org/gdal/presentation.html))
+If we want to put our new overlay online, we are going to need to get it to a more standard projection, WGS84 (EPSG:3857). We'll need to tell gdal that what we've been using all this time is Lambert93, a.k.a EPSG:2154 (as pointed out by [GDAL-OGR](https://gdal.gloobe.org/gdal/presentation.html))
 
 It is possible to do this directly on the raw elevation data (and translate it at the same time to GeoTiff), with:
 
@@ -188,3 +189,16 @@ gdaldem color-relief clapier_wgs_slope.tif gdaldem-color-slope-oslo.conf clapier
 Our overlay is now web-ready... or not, because of all missing data near corners.
 
 <img src="img/geo/clapier_slopeshade_wgs_oslo.jpg" width="400">
+
+
+# Possible integrations
+
+This maps could benefit from the more precise contour lines/relief:
+
+* [OpenSlopeMap](https://www.openslopemap.org/projekt/hintergrundinformationen/)
+* OpenAndroMaps [Elevate](https://www.openandromaps.org/en/legend/elevate-mountain-hike-theme) based on [MapsForge](https://wiki.openstreetmap.org/wiki/Mapsforge)
+* OpenTopoMap (on [github](https://github.com/der-stefan/OpenTopoMap/tree/master/mapnik)) [2]
+* OpenHikingMap / [maps.refuges.info](https://wiki.openstreetmap.org/wiki/Hiking/mri)
+* [MapTiler Topo](https://www.maptiler.com/maps/#topo) (based on OpenTilesMap but Topo is private)
+
+It could also directly be used as an [OruxMaps DEM file](https://www.oruxmaps.com/cs/en/blog/25-dem-files)
