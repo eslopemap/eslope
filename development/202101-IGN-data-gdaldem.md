@@ -2,6 +2,16 @@ IGN Recently opened access to [RGE ALTI 5m](https://geoservices.ign.fr/documenta
 
 This post attempts to play with the data at a basic-level, to reproduce IGN's own slope maps.
 
+# Table of contents
+
+* [Data overview](#data-overview)
+* [GDAL setup](#gdal-setup)
+* [Generating slope](#generating-slope)
+* [Projection conversion](#projection-conversion)
+* [Handling the whole dataset](#handling-the-whole-dataset)
+* [Mobile use](#mobile-use)
+* [Possible integrations](#possible-integrations)
+
 # Data overview
 
 For example this archive covers all the Alpes-Maritimes (06): [RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D006_2020-09-15.7z](ftp://RGE_ALTI_ext:Thae5eerohsei8ve@ftp3.ign.fr/RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D006_2020-09-15.7z). I weighs 313 MB / 1.7 GB uncompressed.
@@ -172,7 +182,7 @@ gdaldem color-relief clapier_lamb_slope.tif gdaldem-color-slope-oslo.conf clapie
 
 # Projection conversion
 
-If we want to put our new overlay online, we are going to need to get it to a more standard projection, WGS84 (EPSG:3857). We'll need to tell gdal that what we've been using all this time is Lambert93, a.k.a EPSG:2154 (as pointed out by [GDAL-OGR](https://gdal.gloobe.org/gdal/presentation.html))
+If we want to put our new overlay online, we are going to need to get it to a more standard projection, WGS84 (EPSG:3857) aka WebMercator or Pseudo-Mercator. We'll need to tell gdal that what we've been using all this time is Lambert93, a.k.a EPSG:2154 (as pointed out by [GDAL-OGR](https://gdal.gloobe.org/gdal/presentation.html))
 
 It is possible to do this directly on the raw elevation data (and translate it at the same time to GeoTiff), with:
 
@@ -180,7 +190,7 @@ It is possible to do this directly on the raw elevation data (and translate it a
 gdalwarp -s_srs EPSG:2154 -t_srs WGS84 -of GTiff RGEALTI_FXX_1050_6345_MNT_LAMB93_IGN69.asc clapier_wgs.tif
 ```
 
-but I could not get `gdaldem slopes` to work on it, so it's better to convert our slope file:
+... but doing so will prevent us from using `gdaldem slopes` effectively (it needs meter units for x/y/z, and result would be biased anyway) so we will instead convert the result of our slope computation:
 
 ```bash
 gdalwarp -s_srs EPSG:2154 -t_srs WGS84 clapier_lamb_slope.tif clapier_wgs_slope.tif
@@ -188,13 +198,31 @@ gdalwarp -s_srs EPSG:2154 -t_srs WGS84 clapier_lamb_slope.tif clapier_wgs_slope.
 gdaldem color-relief clapier_wgs_slope.tif gdaldem-color-slope-oslo.conf clapier_slopeshade_wgs_oslo.tif
 ```
 
-Our overlay is now web-ready... or not, because of all missing data near corners.
-
 <img src="img/geo/clapier_slopeshade_wgs_oslo.jpg" width="400">
+<br/>
+<br/>
+
+# Handling the whole dataset
+
+So far we've worked on only one tile, but we can instead start by merging all the tiles in a big GeoTIFF. We just need to specify the Lambert projection as `.asc` doesn't provide it.
+
+```bash
+for ascfile in *.asc; do
+    gdal_translate -a_srs EPSG:2154 $ascfile ${ascfile/.asc/-lambert.tif}
+done
+
+gdal_merge.py *.tif -o data-lamb-tiled.tif -co TILED=YES
+```
+
+The last command took 30 seconds and generated a 1.5GB file.
+
+*Note that without the `-co TILED` option, gdal will generate a striped file, which in this case takes 2 minutes to create, is 2% bigger, and might be less efficient to use.*
+
+From here we can generate the slope model and shade as above.
 
 # Mobile use
 
-To convert to mbtiles (which will also reproject to EPSG:3857 WebMercator):
+To convert to mbtiles (which will automatically reproject to EPSG:3857 WebMercator as needed):
 
 ```bash
 gdal_translate -of MBTiles clapier_slopeshade_oslo.tif clapier_slopeshade_oslo.mbtiles
@@ -204,7 +232,7 @@ The whole 06/Alpes-Maritimes county in this format will weigh 150 MB, contain on
 
 <img src="img/geo/06_slopeshade_oslo.jpg" width="400">
 
-Good maps like [Sorbetto](https://tartamillo.wordpress.com/sorbetto/) only include Slope shade starting at level 15, which can be achieved thus:
+Good maps like [Sorbetto](https://tartamillo.wordpress.com/sorbetto/) only include slope shade starting at level 15, which can be achieved thus:
 
 ```bash
 gdal_translate -of MBTiles -co ZOOM_LEVEL_STRATEGY=UPPER input.tif output.mbtiles
@@ -223,4 +251,10 @@ This maps could benefit from the more precise contour lines/relief:
 * ThunderForest Topo / OpenCycleMap / my.viewranger.com (private)
 * [MapTiler Topo](https://www.maptiler.com/maps/#topo) (based on OpenTilesMap but Topo is private)
 
-It could also directly be used as an [OruxMaps DEM file](https://www.oruxmaps.com/cs/en/blog/25-dem-files)
+## On mobile
+
+The raw DEM (Digital Elevation Model) could also directly in [OruxMaps](https://www.oruxmaps.com/cs/en/blog/25-dem-files) or [AlpineQuest](https://www.alpinequest.net/en/help/v2/elevations). Both apps are able to display relief or slope shade based on the raw-data. At this time they only support lower-precision formats, like the SRTM `hgt` format which has only 1 arc-second (≈30 meters) precision.
+
+> *[Orux]* Supported SRTM-DTED and GTOPO30/SRTM30 files. You have to copy the .HGT or the .DEM + .HDR files in the oruxmaps/dem/ folder.
+
+> *[Alpine]* You must use DEM files in the “.HGT” format (either 1201 or 3601 values per lines)
