@@ -253,8 +253,12 @@ This maps could benefit from the more precise contour lines/relief:
 
 ## On mobile
 
-The raw DEM (Digital Elevation Model) could also directly in [OruxMaps](https://www.oruxmaps.com/cs/en/blog/25-dem-files) or [AlpineQuest](https://www.alpinequest.net/en/help/v2/elevations). Both apps are able to display relief or slope shade based on the raw-data. At this time they only support lower-precision formats, like the SRTM `hgt` format which has only 1 arc-second (≈30 meters) precision.
+We could convert the raw DEM (Digital Elevation Model) to use it directly in [OruxMaps](https://www.oruxmaps.com/cs/en/blog/25-dem-files) or [AlpineQuest](https://www.alpinequest.net/en/help/v2/elevations). Both apps are able to display relief or slope shade based on the raw-data.
+
+however at this time they only support lower-precision formats, like the SRTM `hgt` format which has maximum precision of 1 arc-second (≈30 meters), so we are unlikely to see much improved quality after downsampling. If you want to try, *Sonnyy* already made the downsampled 1" DEM [here](https://data.opendataportal.at/dataset/dtm-france)
 
 > *[Orux]* Supported SRTM-DTED and GTOPO30/SRTM30 files. You have to copy the .HGT or the .DEM + .HDR files in the oruxmaps/dem/ folder.
 
 > *[Alpine]* You must use DEM files in the “.HGT” format (either 1201 or 3601 values per lines)
+
+So I will be using the MBTiles above as overlay instead.
