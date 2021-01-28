@@ -192,6 +192,25 @@ Our overlay is now web-ready... or not, because of all missing data near corners
 
 <img src="img/geo/clapier_slopeshade_wgs_oslo.jpg" width="400">
 
+# Mobile use
+
+To convert to mbtiles (which will also reproject to EPSG:3857 WebMercator):
+
+```bash
+gdal_translate -of MBTiles clapier_slopeshade_oslo.tif clapier_slopeshade_oslo.mbtiles
+```
+
+The whole 06/Alpes-Maritimes county in this format will weigh 150 MB, contain only zoom level 14 as evidenced by `gdalinfo`, and crash regular desktop image viewers.
+
+<img src="img/geo/06_slopeshade_oslo.jpg" width="400">
+
+Good maps like [Sorbetto](https://tartamillo.wordpress.com/sorbetto/) only include Slope shade starting at level 15, which can be achieved thus:
+
+```bash
+gdal_translate -of MBTiles -co ZOOM_LEVEL_STRATEGY=UPPER input.tif output.mbtiles
+```
+
+In this case the file will weigh 450 MB and took 5 minutes to generate on my recent laptop.
 
 # Possible integrations
 
