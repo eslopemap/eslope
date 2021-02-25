@@ -10,9 +10,13 @@ name = sys.argv[1] if len(sys.argv) > 1 else 'oslo'
 Ndegrees = 90
 cdict = {'red': [], 'green': [], 'blue': []}
 
-with open('gdaldem-slope-{}.clr'.format(name)) as f:
+src = 'gdaldem-slope-{}.clr'.format(name)
+print (src, '->', name + '.jpg')
+
+with open(src) as f:
     slope = 0
     for line in f:
+        if line.startswith('nv'): continue
         elems = list(map(float, line.strip().split()))
         if len(elems) < 5:
             elems.append(255)

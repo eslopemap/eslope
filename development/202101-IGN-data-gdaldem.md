@@ -44,7 +44,7 @@ Where
 * NODATA_value is used to fill the grid, e.g. beyond borders
 * xllcorner/yllcorner is the X/Y of the Lower-Left (SW) corner, and in meters this time.
 
-The projection used for all these coordinates is "[Lambert 93](https://fr.wikipedia.org/wiki/Projection_conique_conforme_de_Lambert#Lambert_93)" (French-specific)
+The projection used for all these coordinates is the French-specific [Lambert 93](https://fr.wikipedia.org/wiki/Projection_conique_conforme_de_Lambert#Lambert_93).
 
 <img src="img/geo/lambert93.jpg" width="400">
 <img src="img/geo/lambert93-horizon.jpg" width="400">
@@ -53,7 +53,7 @@ There's some metadata in [IGNF.xml](https://librairies.ign.fr/geoportail/resourc
 
 There's also a shape, listing every tile's extent and source which should let you load the full dataset, e.g. in QGIS or using [gdal ESRI Shapefile / DBF](https://gdal.org/drivers/vector/shapefile.html) driver.
 
-``` bash
+```bash
 ogrinfo  3_SUPPLEMENTS_LIVRAISON_2020-11-00140/RGEALTI_2-0_5M_ASC_LAMB93-IGN69_D006_2020-09-15/source.shp
 INFO: Open of `source.shp'
       using driver `ESRI Shapefile' successful.
@@ -173,7 +173,7 @@ We can also use a more precise palette (useful for alpinism/ski-touring), like t
  55 ° -90 °    0   0 255    #0000FF  blue
 ```
 <img src="img/geo/oslo-colormap-palette.jpg" width="50">
-<img src="img/geo/oslo-colormap-gradient.jpg" width="400">
+<img src="img/geo/oslo-colormap-gradient.png" width="400">
 
 Which I slightly tweaked above to make it continuous, in [gdaldem-slope-oslo.clr](geo/data/gdaldem-slope-oslo.clr). Let's use it:
 
@@ -184,27 +184,86 @@ gdaldem color-relief clapier_lamb_slope.tif gdaldem-slope-oslo.clr clapier_slope
 
 <img src="img/geo/clapier_slopeshade_oslo.jpg" width="400">
 
+It can be useful to differentiate missing data from "flat" slope (white), for example by making it transparent. This can help to merge multiple DEM together as we'll do later.
+To do so, the `clr` files I ended up using have a 4th column for transparency (255 for opaque) and an additional `nv 0 0 0 0` line to be used with the `gdaldem color-relief -alpha` option.
+
+Note that transparency is not necessary to make a slope overlay, as one can use the "multiply" blending option (available for example on mobile [AlpineQuest](https://www.alpinequest.net/forum/viewtopic.php?t=3991), [LocusMaps](https://docs.locusmap.eu/doku.php?id=manual:user_guide:maps_tools:overlays)) or OruxMaps, to avoid the loss of contrast of a classic translucent overlay.
+
 
 Reprojection
 ===============
 
-If we want to put our new overlay online, we are going to need to get it to a more standard projection, WGS84 (EPSG:3857) aka WebMercator or Pseudo-Mercator. Since `asc` files are not georeferenced, we'll need to tell gdal that what we've been using all this time is *Lambert93*, a.k.a *EPSG:2154* (as pointed out by [GDAL-OGR](https://gdal.gloobe.org/gdal/presentation.html))
+If we want to put our new overlay online, we are going to need to get it to a more standard projection, WGS84 Pseudo-Mercator ([EPSG:3857](https://epsg.io/3857)) aka WebMercator -- not to be [confused](https://gis.stackexchange.com/a/48952/176462) with WGS84 / EPSG 4326.
+
+ Since `asc` files are not georeferenced, we'll need to tell gdal that what we've been using all this time is *Lambert93*, a.k.a *EPSG:2154* (as pointed out by [GDAL-OGR](https://gdal.gloobe.org/gdal/presentation.html))
 
 It is possible to do this directly on the raw elevation data (and translate it at the same time to GeoTiff), with:
 
 ```bash
-gdalwarp -s_srs EPSG:2154 -t_srs WGS84 -of GTiff RGEALTI_FXX_1050_6345_MNT_LAMB93_IGN69.asc clapier_wgs.tif
+gdalwarp -s_srs EPSG:2154 -t_srs EPSG:3857 -of GTiff RGEALTI_FXX_1050_6345_MNT_LAMB93_IGN69.asc clapier_wgs.tif
 ```
 
 ... but doing so will prevent us from using `gdaldem slopes` effectively (it needs meter units for x/y/z, and result would be biased anyway) so we will instead convert the result of our slope computation:
 
 ```bash
-gdalwarp -s_srs EPSG:2154 -t_srs WGS84 clapier_lamb_slope.tif clapier_wgs_slope.tif
+gdalwarp -s_srs EPSG:2154 -t_srs EPSG:3857 clapier_lamb_slope.tif clapier_slope.tif
 
-gdaldem color-relief clapier_wgs_slope.tif gdaldem-slope-oslo.clr clapier_slopeshade_wgs_oslo.tif
+gdaldem color-relief clapier_wgs_slope.tif gdaldem-slope-oslo.clr clapier_slopeshade_oslo.tif
 ```
 
 <img src="img/geo/clapier_slopeshade_wgs_oslo.jpg" width="400">
+
+
+What about the italian border?
+===============
+
+Our Italian neighbours in Piemont have an even more impressive DEM, called *RIPRESA AEREA ICE 2009-2011 - DTM 5*, hosted [here](http://www.geoportale.piemonte.it/geonetworkrp/srv/ita/metadata.show?id=2552&currTab=rndt). Unlike the current IGN *RGE ALTI*, partially based on RADAR, it uses LiDAR *even in the mountains*. Here's how much better it is in the *Monte Oronaye / Tête de Moïse* area:
+
+<img src="img/geo/oronaye-sample-it.png" width="300">
+<img src="img/geo/oronaye-sample-fr.png" width="300">
+
+So we are going to use it for the italian side and on the border overlap.
+
+Some differences in this dataset:
+* It comes already in georeferenced TIF
+* It uses yet another projection, *UTM 32N* aka *EPSG:32632*. Again we'll compute slopes **before** reprojecting.
+* While the French use `-a_nodata -99999`, the Italian use `-a_nodata -99` (and gdal uses `-9999` - no, it's not confusing).
+
+We will also use the Aosta Valley 2005/2008 DEM, which has an even higher 2m resolution It is hosted [here](https://geoportale.regione.vda.it/download/dtm/) and uses *UTM ED50 32N* aka *EPSG:23032*.
+
+
+Clapier sample
+--------------
+
+Let's start with the Italian side of Mont Clapier, in tile 243.
+
+<details>
+<summary>(How we got clapier-slopeshade-sorbet.tif previously)</summary>
+
+```bash
+gdal_translate -a_srs EPSG:2154 -a_nodata -99999 ../RGEALTI_FXX_1050_6345_MNT_LAMB93_IGN69.asc clapier-lamb.tif
+gdaldem slope clapier-lamb.tif clapier-lamb-slope.tif
+gdaldem color-relief -alpha clapier-lamb-slope.tif ../gdaldem-slope-sorbet.clr clapier-lamb-slopeshade-sorbet.tif
+gdalwarp -t_srs EPSG:3857 clapier-lamb-slopeshade-sorbet.tif clapier-slopeshade-sorbet.tif
+```
+</details>
+
+```bash
+wget 'http://www.datigeo-piem-download.it/static/regp01/DTM5_ICE/RIPRESA_AEREA_ICE_2009_2011_DTM-SDO_CTR_FOGLI50-243-EPSG32632-TIF.zip'
+unzip *243*.zip
+gdaldem slope DTM5_243.tif DTM5_243-utm32n-slope.tif
+gdaldem color-relief -alpha DTM5_243-utm32n-slope.tif ../gdaldem-slope-sorbet.clr DTM5_243-utm32n-slopeshade-sorbet.tif
+gdalwarp -t_srs EPSG:3857 DTM5_243-utm32n-slopeshade-sorbet.tif DTM5_243-slopeshade-sorbet.tif
+gdal_merge.py -a_nodata=0 clapier-wgs-slopeshade-sorbet.tif DTM5_243-slopeshade-sorbet.tif -o clapier_sorbet_frit.tif
+```
+
+This is the same workflow we've used with the IGN data, and when we merge the 2 files we make sure the italian one is last.
+
+It is important that the 2 source files have an alpha layer, otherwise `gdal_merge` will not "blend" the layers, and/or produce black borders (unless tricked with `-a_nodata 0`).
+This is done by the `nv` line in our `.clr` file catching the *nodata=-9999* in the *...-slope.tif* files.
+
+<img src="img/geo/clapier_sorbet_frit.webp" width="300">
+
 
 Handling the whole dataset
 ===============
@@ -227,93 +286,225 @@ I am not sure of the best way to handle nodata, the translate doc says:
 
 The last command took 30 seconds and generated a 1.5GB file.
 
-*Note 1:* without the `-co TILED` option, gdal will generate a striped file, which in this case takes 2 minutes to create, is 2% bigger, and might be less efficient to use.
+*__Note: Tiling:__* without the `-co TILED` option, gdal will generate a striped file, which in this case takes 2 minutes to create, is 2% bigger, and might be less efficient to use.
 
-*Note 2:* If you don't have `gdal_merge.py`, you [can](https://gis.stackexchange.com/questions/230553/merging-all-tiles-from-one-directory-using-gdal) instead use `gdalbuildvrt mosaic.vrt *.tif` then `gdal_translate` it.
+*__Note: Memory:__* `gdal_merge.py` needs to put all datat in memory, instead you [can](https://gis.stackexchange.com/questions/230553/merging-all-tiles-from-one-directory-using-gdal) use `gdalbuildvrt mosaic.vrt *.tif` then `gdal_translate` it.
 
 From there we can generate the slope model and shade with `gdaldem` as above.
 
-```bash
-gdaldem color-relief clapier_lamb_slope.tif gdaldem-slope-oslo.clr clapier_slopeshade_oslo.tif
-```
+*__Note: Compression:__* You can use GeoTIFF Jpeg compression with `-co COMPRESS=JPEG -co PHOTOMETRIC=YCBCR`, at the expense of transparency. <br/>
+After some tests and reading this awesome [Guide to GeoTIFF compression and optimization with GDAL](https://kokoalberti.com/articles/geotiff-compression-optimization-guide/), I went instead with fast ZSTD compression for all the intermediate data-sets, with `-co compress=zstd -co predictor=2 -co zstd_level=1` .
 
-Note that you can use GeoTIFF Jpeg compression with `-co "COMPRESS=JPEG" -co "PHOTOMETRIC=YCBCR"`, at the expense of transparency.
+*__Note: Sparse files:__* We can also use `-co SPARSE_OK=TRUE` to reduce file size for our non-rectangular dataset.
 
-What about the italian border?
-===============
 
-Our Italian neighbours in Piemont have an even more impressive DEM, called *RIPRESA AEREA ICE 2009-2011 - DTM 5*, hosted [here](http://www.geoportale.piemonte.it/geonetworkrp/srv/ita/metadata.show?id=2552&currTab=rndt). Unlike the current IGN *RGE ALTI*, partially based on RADAR, it uses LiDAR *even in the mountains*. Here's how much better it is in the *Monte Oronaye / Tête de Moïse* area:
-
-<img src="img/geo/oronaye-sample-it.png" width="300">
-<img src="img/geo/oronaye-sample-fr.png" width="300">
-
-So we are going to use it for the italian side and on the border overlap.
-
-Some differences in this dataset:
-* It comes already in georeferenced TIF
-* It uses yet another projection, *UTM 32N* aka *EPSG:32632*. Again we'll compute slopes **before** reprojecting.
-* While the French use `-a_nodata -99999`, the Italian use `-a_nodata -99` (and gdal uses `-9999` - no, it's not confusing).
-
-Clapier sample
+Putting it all together
 --------------
 
-Let's start with the Italian side of Mont Clapier, in tile 243.
+**Tips to work with big datasets:**
 
-<details>
-<summary>(How we got clapier_slopeshade_wgs_oslo.tif previously)</summary>
+  * To test commands on smaller version of the files, use `gdalwarp -r average -ts 800 0 <in> <out>` to downsample to 800px width. To downsample `WGS84` files, use `gdalwarp -tr 0.003 -0.003 <in> <out>` to set pixel size to *1 px = 0.003°*. For WebMercator it can be `-tr 500 -500` for a *1 px = 500 meters*.
+
+  * To inpect a small chunk, design a geojson file drawing a square, eg *clapier.geojson*, then use `gdalwarp -crop_to_cutline -cutline clapier.geojson <in> <out>`
+    ```json
+    {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[7.38,44.15],[7.38,44.1],[7.44,44.1],[7.44,44.15],[7.38,44.15]]]},"properties":{}}
+    ```
+
+  * `gdalinfo -stat` or `gdalinfo -hist` are also handy. For example this shows size, min/max altitudes and missing data in the Aoste DEM: `gdalinfo -stats aoste-dem.vrt`:
+
+    > Size is 44186, 22846
+    > <br/> Band 1 Block=128x128 Type=Float32, ColorInterp=Undefined
+    > <br/> NoData Value=-9999
+    > <br/> Metadata:
+    > <br/>    STATISTICS_MAXIMUM=3813.3359375
+    > <br/>    STATISTICS_MEAN=1996.4601879555
+    > <br/>    STATISTICS_MINIMUM=333.18200683594
+    > <br/>    STATISTICS_STDDEV=723.69831082825
+    > <br/>    STATISTICS_VALID_PERCENT=72.04
+
+**Common**
+
+Some common variables, to work with tiled geotiff and use ZSTD compression as discussed above:
+  ```bash
+  download=$HOME/Downloads/dwnmaps/elevationdata
+  mkdir -p $download
+  workdir=$download
+  g_tile='-co num_threads=all_cpus -co tiled=yes -co blockXsize=1024 -co blockYsize=1024'
+  g_zstd='-co bigtiff=yes -co compress=zstd -co predictor=2 -co zstd_level=1 -co sparse_ok=true'
+  ```
+
+**Download datasets**
+
+The URLs of the files we need to download are here - if they haven't changed in the meantime:
+
+* <a href="geo/src/ign-rge-alti-5m-urls.txt">ign-rge-alti-5m-urls.txt</a>
+* <a href="geo/src/piemonte-alpi-dtm5-urls.txt">piemonte-alpi-dtm5-urls.txt</a>
+* <a href="geo/src/aosta-dtm0508-urls.txt">aosta-dtm0508-urls.txt</a>
 
 ```bash
-gdal_translate -a_srs EPSG:2154 -a_nodata -99999 ../RGEALTI_FXX_1050_6345_MNT_LAMB93_IGN69.asc clapier-lamb.tif
-gdaldem slope clapier-lamb.tif clapier-lamb-slope.tif
-gdaldem color-relief -alpha clapier-lamb-slope.tif ../gdaldem-slope-sorbet-nvwhite.clr clapier-lamb-slopeshade-sorbet.tif
-gdalwarp -t_srs WGS84 clapier-lamb-slopeshade-sorbet.tif clapier-wgs-slopeshade-sorbet.tif
+cd $download
+wget -i ign-rge-alti-5m-urls.txt
+wget --wait=20 --random-wait --no-http-keep-alive --limit-rate=300k -nc -i piemonte-alpi-dtm5-urls.txt
+wget --wait=20 --random-wait --no-http-keep-alive --limit-rate=300k -nc -i aosta-dtm0508-urls.txt
+
+for f in RGE*29.7z; do 7z x $f; done
+cd $workdir
 ```
+
+
+**French alps** - dept 04 05 06 38 73 74 *(slope 8 minutes → 5GB ; color 5 minutes → 2GB)*:
+```bash
+gdalbuildvrt -a_srs EPSG:2154 -srcnodata -99999 -vrtnodata -99999 ignalps_dem.vrt \
+  $download/RGEALTI_2-0_5M_ASC_LAMB93-IGN69_*/RGEALTI/1_DONNEES_LIVRAISON_*/RGEALTI_MNT_5M_ASC_LAMB93_IGN69_*/RGEALTI_FXX_*
+time gdaldem slope $=g_zstd $=g_tile ignalps_dem.vrt ignalps-lamb-slope.tif
+time gdaldem color-relief $=g_zstd $=g_tile -alpha ignalps-lamb-slope.tif ~/code/eddy-geek/TIL/geo/data/gdaldem-slope-oslo.clr ignalps-lamb-oslo.tif
+
+```
+
+*I'm using zsh `$=VAR` syntax, use `$VAR` in bash.*
+
+**Piemont** *(slope: 3 min → 1.6GB instead of 7GB uncompressed ; color 2 min → 1 GB)*:
+
+```bash
+cd $download ; unzip RIPRESA*TIF.zip ; cd $workdir
+gdalbuildvrt piemont_dem.vrt $download/DTM5_*.tif
+time gdaldem slope $=g_zstd $=g_tile piemont_dem.vrt piemont-utm32n-slope-tile.tif
+time gdaldem color-relief $=g_zstd $=g_tile -alpha piemont-utm32n-slope.tif ../../gdaldem-slope-oslo.clr piemont-utm32n-oslo.tif
+```
+
+**Aoste**:
+
+We use gdal's "[virtual file system](https://gdal.org/user/virtual_file_systems.html)" syntax to access inside zip files directly (aoste).
+
+(!) For some reason trying to use `tiled=yes` for slopes does not work.
+
+```bash
+ln -s $download aoste_dtm_zips
+rm -f aoste_dtm_zips.txt ; touch aoste_dtm_zips.txt ; for f in DTM0508_002_000{001..914} ; do echo "/vsizip/{aoste_dtm_zips/$f.zip}/$f.ASC" >> aoste_dtm_zips.txt ; done
+
+gdalbuildvrt -a_srs EPSG:23032 -srcnodata -9999 -vrtnodata -9999 aoste-dem.vrt -input_file_list aoste_dtm_zips.txt
+time gdaldem slope $=g_zstd aoste-dem.vrt aoste-utm32n-slope.tif
+time gdaldem color-relief $=g_zstd -alpha aoste-utm32n-slope.tif gdaldem-slope-oslo.clr aoste-utm32n-oslo.tif
+```
+
+**Merge**:
+
+Then we merge it all, reproject to WebMercator, and resample all-together.
+
+*__Note: Resolution:__* `gdalwarp` thinks the 2m resolution of the UTM-32N Aoste dataset translates roughly to 2.8 WGS "meters". But our final zlevel=16 file will have a slightly more precise resolution of 2.3 meters (see [OSM Zoom levels](https://wiki.openstreetmap.org/wiki/Zoom_levels)). To avoid the loss of precision from resampling twice, we use `-tr` option to force the resolution.
+
+*__Note: Resampling:__* gdal uses *nearest* resampling by default. A insightful comparison can be found in [What is Lanczos resampling useful for in a spatial context?](https://gis.stackexchange.com/a/14361/176462). *nearest* actually seemed best for this slope overlay given that we are upsampling, and that accuracy is paramount.
+
+<img src="https://i.stack.imgur.com/Lw6ei.png" width="626">
+
+
+*__Note: Extent:__* To somewhat limit file size, I have cropped the data to the area roughly defined by Aigle-Jouques-Sanremo-Zermatt, aligned on the TMS tiles as shown [here](https://www.maptiler.com/google-maps-coordinates-tile-bounds-projection/).
+
+<img src="img/geo/Aigle-Jouques-SanRemo-Zermatt.jpg" width="100">
+
+*__Note: nodata:__* gdal can identify nodata [from a specific *nodata value*](https://gdal.org/development/rfc/rfc58_removing_dataset_nodata_value.html) **or** [with a mask](https://gdal.org/development/rfc/rfc15_nodatabitmask.html) like the alpha band. <br/>
+By default gdalwarp will blend the inputs with the alpha band (we rely on this here!) but "forget" the *nodata value* saying that our `nv 0 0 0 0` pixels are nodata, and write them as black transparent, which causes jpegs with a black frame down the line. <br/>
+By setting `-dstnodata 255` we make them **white transparent** instead, and unfortunately set each band *nodata value* -- that we then remove with `gdal_edit`. <br/>
+The alpha band (4) still allows to differentiate "flat white" and "no data white". gdal_translate uses it as a mask **even if there is a _nodata value_**, so a later translation to jpg will still end-up black unless `-b 1 -b 2 -b 3` are provided to explicitly ignore that band.
+
+<details><summary>A gdal_calc alternative...</summary>
+It's a bit of a trick in that we'd need to discard the metadat nodata value to further process the data. One alternative is to not use `-dstnodata 255` and instead use gdal_calc as follows:
+
+We need a recent version of gdal_calc with the `hideNoData` flag.
+
+```bash
+wget https://github.com/OSGeo/gdal/raw/d9e9e827d85c9581a81d93409ea88943497e174f/gdal/swig/python/osgeo/utils/gdal_calc.py
+
+inf=oslo-Aigle-Jouques-Sanremo-Zermatt.tif
+/usr/bin/python3 ../gdal_calc.py \
+ --co num_threads=all_cpus --co tiled=yes --co blockXsize=1024 --co blockYsize=1024  --co bigtiff=yes \
+ --co compress=zstd --co predictor=2 --co zstd_level=1  --hideNoData \
+ -R $inf --R_band=1 -G $inf --G_band=2 -B $inf --B_band=3 \
+ --calc="where(R+G+B,R,255)" --calc="where(R+G+B,G,255)" --calc="where(R+G+B,B,255)" \
+ --overwrite --outfile=${inf/.tif/}-result.tif
+ ```
 </details>
 
+(A possible improvement is to use a built-in palette keep one band through the merge, and defer the RGB encoding until the mbtiles conversion. If needed palette can be [edited](https://gis.stackexchange.com/questions/272847/how-to-change-raster-palette))
+
+Finally, free 7 GB, grab a coffee (15 minutes)  and here we go:
+
 ```bash
-wget 'http://www.datigeo-piem-download.it/static/regp01/DTM5_ICE/RIPRESA_AEREA_ICE_2009_2011_DTM-SDO_CTR_FOGLI50-243-EPSG32632-TIF.zip'
-unzip *243*.zip
-gdaldem slope DTM5_243.tif DTM5_243-utm32n-slope.tif
-gdaldem color-relief -alpha DTM5_243-utm32n-slope.tif ../gdaldem-slope-sorbet.clr DTM5_243-utm32n-slopeshade-sorbet.tif
-gdalwarp -t_srs WGS84 DTM5_243-utm32n-slopeshade-sorbet.tif DTM5_243-slopeshade-sorbet.tif
-gdal_merge.py clapier-wgs-slopeshade-sorbet.tif DTM5_243-slopeshade-sorbet.tif -o clapier_sorbet_frit.tif
+time gdalwarp $=g_zstd $=g_tile -dstnodata 255 \
+  -t_srs EPSG:3857 -tr 2.388657133911758 -2.388657133911758 \
+  -te_srs WGS84 -te 5.6250 43.5804 7.7343 46.316 \
+  fr/ignalps-lamb-oslo.tif it/piemont-utm32n-oslo.tif aoste/aoste-utm32n-oslo.tif \
+  alps/oslo-Aigle-Jouques-Sanremo-Zermatt.tif
+
+gdal_edit.py -unsetnodata oslo-Aigle-Jouques-Sanremo-Zermatt.tif
 ```
 
-This is the same workflow we've used with the IGN data, and when we merge the 2 files we make sure the italian one is last.
-
-No need to add `gdalwarp -srcnodata -99 -dstnodata -99999`, the `gdaldem slope` output has a no_data of `-9999` for both datasets.
-
-This is then transformed by the "nv" line in our `.clr` file.
-
-France has a nodata that is white transparent: `nv 255 255 255 0`,<br/>
-while Italy has a nodata that is black transparent: `nv 0 0 0 0`.
-
-Then, since
 
 Mobile use
 ===============
 
-To convert to mbtiles (which will automatically reproject to EPSG:3857 WebMercator as needed):
+To convert the above to mbtiles (~30 minutes):
 
 ```bash
-gdal_translate -of MBTiles clapier_slopeshade_oslo.tif clapier_slopeshade_oslo.mbtiles
+time gdal_translate -b 1 -b 2 -b 3 -co tile_format=jpeg -co quality=75 \
+  alps/oslo-Aigle-Jouques-Sanremo-Zermatt.{tif,mbtiles}
 ```
 
-The whole 06/Alpes-Maritimes county in this format will weigh 150 MB, contain only zoom level 14 as evidenced by `gdalinfo`, and crash regular desktop image viewers.
+*__Note: Zoom level__:* gdal's [MBTiles raster driver](https://gdal.org/drivers/raster/mbtiles.html) says:
+
+> ZOOM_LEVEL_STRATEGY=AUTO/LOWER/UPPER. Strategy to determine zoom level. LOWER will select the zoom level immediately below the theoretical computed non-integral zoom level, leading to subsampling. On the contrary, UPPER will select the immediately above zoom level, leading to oversampling. Defaults to AUTO which selects the closest zoom level.
+
+Good maps like [Sorbetto](https://tartamillo.wordpress.com/sorbetto/) only include slope shade starting at level 15.
+
+For us, when using the automatic resolution of the 5m DEMs (ign or piemont), *AUTO = LOWER is 14*, and *UPPER is 15*. For the 2m aoste DEM, *LOWER is 15* and *AUTO = UPPER is 16*. Finally, with the `-tr` trick, and we shoud avoid the resampling (Bilinear by default).
+
+*__Note: Tile format__:*
+> TILE_FORMAT=PNG/PNG8/JPEG: Format used to store tiles. See Tile formats section. Defaults to PNG.
+
+Jpeg with the default 75% quality will cut size by at least 2. It is possible to go down to 40%.
+
+```bash
+gdal_translate -co tile_format=jpeg -co quality=75 alps/oslo-Aigle-Jouques-Sanremo-TMS.tif alps/oslo-Aigle-Jouques-Sanremo-TMS-jpg.mbtiles
+```
+
+The whole 06/Alpes-Maritimes county in this format will weigh 150 MB in PNG / zoom level 14 ; or 450 MB at level 15.
 
 <img src="img/geo/06_slopeshade_oslo.jpg" width="400">
 
-Good maps like [Sorbetto](https://tartamillo.wordpress.com/sorbetto/) only include slope shade starting at level 15, which can be achieved thus:
+The Western alps as defined in the previous section weigh around 2 GB in jpg / zoom 16.
+
+Use with AlpineQuest
+---------------
+
+Alpine will up & downsample up to 3 levels. beyond that however, it will display a transparent-blue "warning layer". To avoid it we can add some white tiles at zoom level 11 (enough to cover 9-14 range, then 15-16 will display the slopes):
+
+We take the `-a_ullr` coordinates directly from our Z16 tif above, and compute the size by dividing its width/height (98301, 180454) by 2**5 for 5 levels.
 
 ```bash
-gdal_translate -of MBTiles -co ZOOM_LEVEL_STRATEGY=UPPER input.tif output.mbtiles
+gdal_create $=g_zstd -outsize 3071 5639 -a_srs EPSG:3857 -a_ullr 626172 5831778 860979 5400735 -bands 3 -burn 255 white11.tif
+gdal_translate -co tile_format=jpeg -co quality=10 white11.tif white11.mbtiles
 ```
 
-In this case the file will weigh 450 MB and took 5 minutes to generate on my recent laptop.
+PNG8 would be 5 times smaller but mbtiles does not support different formats, and we are now merging with some jpegs:
+
+```sql
+append_mbt()  # append_mbt $source $dest
+{
+  echo "ATTACH \"$1\" AS low; INSERT INTO main.tiles SELECT * FROM low.tiles;" | sqlite3 $2
+}
+
+append_mbt
+```
+
+
+
+Use with OruxMaps
+---------------
+
+OruxMaps will not downsample automatically. So you would need to add the other layers with `gdaladdo`.
 
 Contours
 ===============
-
 
 ```bash
 mkdir contour ; cd contour

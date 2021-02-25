@@ -1,0 +1,329 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "MultiLineString",
+                "coordinates": [
+                    [[4.9,43.068887], [7.1,43.068887]],
+                    [[4.9,43.580393], [8.5,43.580393]],
+                    [[4.9,44.087584], [8.5,44.087584]],
+                    [[4.9,44.590469], [8.5,44.590469]],
+                    [[4.9,45.089034], [8.5,45.089034]],
+                    [[4.9,45.583291], [8.5,45.583291]],
+                    [[4.9,46.073229], [8.5,46.073229]],
+                    [[4.9,46.558862], [8.5,46.558862]],
+                    [[4.921878,43], [4.921878,46.6]],
+                    [[5.624999,43], [5.624999,46.6]],
+                    [[6.328128,43], [6.328128,46.6]],
+                    [[7.031248,43], [7.031248,46.6]],
+                    [[7.734378,43.58], [7.734378,46.6]],
+                    [[8.437498,43.58], [8.437498,46.6]]
+                ]
+            },
+            "properties": {
+                "name": "TMSz9",
+                "stroke": "#ffff00", "stroke-width":  5, "stroke-opacity": 0.5
+            }
+            },
+            {
+            "type": "Feature",
+            "geometry": {
+                "type": "MultiLineString",
+                "coordinates": [
+                    [[5,43.580393], [8.5,43.580393]],
+                    [[5,44.339566], [8.5,44.339566]],
+                    [[5,45.089034], [8.5,45.089034]],
+                    [[5,45.583291], [8.5,45.583291]],
+                    [[5,46.437858], [8.5,46.437858]]
+                ]
+            },
+            "properties": {
+                "name": "TMS z9/10/11 chosen",
+                "stroke": "#ff0000", "stroke-width":  1
+            }
+        },
+        {
+            "type":"Feature",
+            "geometry":{
+                "type":"Polygon",
+                "coordinates":[[[5.625,46.316], [5.625,43.581], [7.734,43.581], [7.734,46.316], [5.625,46.316]]]
+            },
+            "properties":
+            {
+                "name": "Aigle-Jouques-Sanremo-Zermatt",
+                "stroke": "#ff00ff", "stroke-width": 1, "fill-opacity": 0.1
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [ 7.031248, 44.590469 ],
+                    [ 6.328128, 44.590469 ], [ 6.328128, 43.580393 ],
+                    [ 7.35, 43.580393 ], [ 7.35, 43.72 ],
+                    [ 7.734378, 43.72 ], [ 7.734378, 44.24 ],
+                    [ 7.031248, 44.24 ], [ 7.031248, 44.590469 ]
+                ]]
+            },
+            "properties": {
+                "name": "IGNt1; Mercantour-Ubaye Antibes-Embrun 10000km2",
+                "stroke": "#00ff00", "stroke-width": 2, "stroke-opacity": 1,
+                "fill": "#00aa00", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 5.273434, 44.590469 ], [ 5.273434, 43.580393 ], [ 6.328128, 43.580393 ], [ 6.328128, 44.590469 ], [ 5.273434, 44.590469 ] ] ]
+            },
+            "properties": {
+                "name": "IGNt2: Digne-Aups-Eguilles-Gap 9500km2",
+                "stroke": "#00ff00", "stroke-width": 2,
+                "fill": "#00aa00", "fill-opacity": 0.3
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 5.273434, 44.590469 ], [ 5.273434, 45.089034 ], [ 7.075, 45.089034 ], [ 7.075, 44.590469 ], [ 5.273434, 44.590469 ] ] ]
+            },
+            "properties": {
+                "name": "IGNt3: Vercors-Ecrins-Cerces Die-Vars-Bardonecchia 9000km2",
+                "stroke": "#00ff00", "stroke-width": 2,
+                "fill": "#00aa00", "fill-opacity": 0.5
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 5.624999, 45.583291 ], [ 5.624999, 45.089034 ], [ 7.207031, 45.089034 ], [ 7.207031, 45.583291 ], [ 5.624999, 45.583291 ] ] ]
+            },
+            "properties": {
+                "name": "IGNt4: Chartreuse-Vanoise Chambéry-Bardonecchia 7000km2",
+                "stroke": "#00ff00", "stroke-width": 1,
+                "fill": "#00aa00", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 5.976563, 45.583291 ], [ 5.976563, 46.437858 ], [ 7.045, 46.437858 ], [ 7.045, 45.583291 ], [ 5.976563, 45.583291 ] ] ]
+            },
+            "properties": {
+                "name": "IGNt5: MontBlanc-Chambéry-Evian 8000km2",
+                "stroke": "#00ff00", "stroke-width": 2,
+                "fill": "#00aa00", "fill-opacity": 0.3
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 6.3, 44.43 ], [ 6.3, 43.72 ], [ 7.72, 43.72 ], [ 7.72, 44.43 ], [ 6.3, 44.43 ] ] ]
+            },
+            "properties": {
+                "name": "IGN-1: Eygaye (Serrre-Ponçon) - Barcelonnette - Larche - Caussols",
+                "stroke": "#0000ff", "stroke-width": 1,
+                "fill": "#000080", "fill-opacity": 0
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 5.735, 45.19 ], [ 5.735, 44.425 ], [ 7.075, 44.425 ], [ 7.075, 45.19 ], [ 5.735, 45.19 ] ] ]
+            },
+            "properties": { "name": "IGN-2: Grenoble Larche 63000 x 51000 px",
+                "stroke": "#0000ff", "stroke-width": 1,
+                "fill": "#000080", "fill-opacity": 0
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 5.3, 45.3 ], [ 5.3, 44.425 ], [ 5.7, 44.425 ], [ 5.7, 45.3 ], [ 5.3, 45.3 ] ] ]
+            },
+            "properties": { "name": "IGN-3: Vercors",
+                "stroke": "#0000ff", "stroke-width": 1,
+                "fill": "#000080", "fill-opacity": 0
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 5.66, 45.67 ], [ 5.66, 45.18 ], [ 7.185, 45.18 ], [ 7.185, 45.67 ], [ 5.66, 45.67 ] ] ]
+            },
+            "properties": { "name": "IGN-4: Voreppe (Grenoble) Izieux (Bourget) - Petit St Benard // Lanzo+Gran Paradiso",
+                "stroke": "#0000ff", "stroke-width": 1,
+                "fill": "#000080", "fill-opacity": 0
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 6.19, 46.4 ], [ 6.19, 45.6 ], [ 7.045, 45.6 ], [ 7.045, 46.4 ], [ 6.19, 46.4 ] ] ]
+            },
+            "properties": { "name": "IGN-5: MontBlanc-Annecy-Evian-Dolent-GrandParra // Monte Bianco",
+                "stroke": "#0000ff", "stroke-width": 1,
+                "fill": "#000080", "fill-opacity": 0
+            }
+        },
+
+
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 6.68, 45.951 ], [ 6.68, 45.5830039 ], [ 7.3829963, 45.5830039 ], [ 7.3829963, 45.951 ], [ 6.68, 45.951 ] ] ]
+            },
+            "properties": {
+                "name": "Monte Bianco",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 7.646, 46.134 ], [ 7.646, 45.5219929 ], [ 8.2620069, 45.5219929 ], [ 8.2620069, 46.134 ], [ 7.646, 46.134 ] ] ]
+            },
+            "properties": {
+                "name": "Monte Rosa",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 6.855, 44.84 ], [ 6.855, 44.5279942 ], [ 7.5590048, 44.5279942 ], [ 7.5590048, 44.84 ], [ 6.855, 44.84 ] ]
+                ]
+            },
+            "properties": {
+                "name": "Monviso",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 7.295, 46.012 ], [ 7.295, 45.7059992 ], [ 7.7340025, 45.7059992 ], [ 7.7340025, 46.012 ], [ 7.295, 46.012 ] ] ]
+            },
+            "properties": {
+                "name": "Cervino",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 7.559, 44.402 ], [ 7.559, 44.0239963 ], [ 8.1739983, 44.0239963 ], [ 8.1739983, 44.402 ], [ 7.559, 44.402 ] ] ]
+            },
+            "properties": {
+                "name": "Monregalese",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 6.592, 45.089 ], [ 6.592, 44.7780068 ], [ 7.4709921, 44.7780068 ], [ 7.4709921, 45.089 ], [ 6.592, 45.089 ] ] ]
+            },
+            "properties": {
+                "name": "Germanasca",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 6.592, 45.275 ], [ 6.592, 45.0270038 ], [ 7.55899, 45.0270038 ], [ 7.55899, 45.275 ], [ 6.592, 45.275 ] ] ]
+            },
+            "properties": {
+                "name": "Susa",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 6.768, 44.59 ], [ 6.768, 44.0879923 ], [ 7.646005, 44.0879923 ], [ 7.646005, 44.59 ], [ 6.768, 44.59 ] ] ]
+            },
+            "properties": {
+                "name": "Cuneese",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [ [ [ 6.943, 45.768], [6.943, 45.397996], [7.90999, 45.397996], [7.90999, 45.768], [6.943, 45.768 ] ] ]
+            },
+            "properties": {
+                "name": "Gran Paradiso",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[[7.031, 45.46], [7.031, 45.2129933], [7.6459983, 45.2129933], [7.6459983, 45.46], [7.031, 45.46]]]
+            },
+            "properties": {
+                "name": "Lanzo",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[[7.998, 46.498], [7.998, 46.0729991], [8.7009963, 46.0729991], [8.7009963, 46.498], [7.998, 46.498]]]
+            },
+            "properties": {
+                "name": "Ossola",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[[8.174, 46.134], [8.174, 45.6450017], [8.7889983, 45.6450017], [8.7889983, 46.134], [8.174, 46.134]]]
+            },
+            "properties": {
+                "name": "Verbano",
+                "stroke": "#999999", "stroke-width": 2,
+                "fill": "#777777", "fill-opacity": 0.2
+            }
+        }
+    ]
+}
