@@ -229,8 +229,9 @@ Some differences in this dataset:
 * It uses yet another projection, *UTM 32N* aka *EPSG:32632*. Again we'll compute slopes **before** reprojecting.
 * While the French use `-a_nodata -99999`, the Italian use `-a_nodata -99` (and gdal uses `-9999` - no, it's not confusing).
 
-We will also use the Aosta Valley 2005/2008 DEM, which has an even higher 2m resolution It is hosted [here](https://geoportale.regione.vda.it/download/dtm/) and uses *UTM ED50 32N* aka *EPSG:23032*.
-
+We will also use
+* the Aosta Valley 2005/2008 DEM, which has an even higher 2m resolution and is hosted [here](https://geoportale.regione.vda.it/download/dtm/) and uses *UTM ED50 32N* aka *EPSG:23032*.
+* the swissALTI3D dataset hosted [here](https://www.swisstopo.admin.ch/de/geodata/height/alti3d.html)
 
 Clapier sample
 --------------
@@ -303,13 +304,14 @@ Putting it all together
 
 **Tips to work with big datasets:**
 
-  * To test commands on smaller version of the files, use `gdalwarp -r average -ts 800 0 <in> <out>` to downsample to 800px width. To downsample `WGS84` files, use `gdalwarp -tr 0.003 -0.003 <in> <out>` to set pixel size to *1 px = 0.003°*. For WebMercator it can be `-tr 500 -500` for a *1 px = 500 meters*.
+  * To test commands on smaller version of the files, use `gdalwarp -r average -ts 800 0 <in> <out>` to downsample to 800px width. To downsample `WGS84` files, use `gdalwarp -tr 0.003 -0.003 <in> <out>` to set pixel size to *1 px = 0.003°*. For WebMercator it can be `-tr 200 -200` for a *1 px = 200 meters*.
 
-  * To inpect a small chunk, design a geojson file drawing a square, eg *clapier.geojson*, then use `gdalwarp -crop_to_cutline -cutline clapier.geojson <in> <out>`
+  * To inpect a small chunk, either **(a)** design a geojson file drawing a square, eg *clapier.geojson*, then use `gdalwarp -crop_to_cutline -cutline clapier.geojson <in> <out>`
+  ...
+  or better **(b)** specify a *target extent* with `-te_srs WGS84 -te 7.38 44 7.44 44.15` . <details><summary>(a) Geojson...</summary>
     ```json
     {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[7.38,44.15],[7.38,44.1],[7.44,44.1],[7.44,44.15],[7.38,44.15]]]},"properties":{}}
-    ```
-
+    ``` </details>
   * `gdalinfo -stat` or `gdalinfo -hist` are also handy. For example this shows size, min/max altitudes and missing data in the Aoste DEM: `gdalinfo -stats aoste-dem.vrt`:
 
     > Size is 44186, 22846
@@ -387,11 +389,23 @@ time gdaldem slope $=g_zstd aoste-dem.vrt aoste-utm32n-slope.tif
 time gdaldem color-relief $=g_zstd -alpha aoste-utm32n-slope.tif gdaldem-slope-oslo.clr aoste-utm32n-oslo.tif
 ```
 
+**Switzerland**:
+```bash
+mkdir ch_downloads
+cd ch_downloads
+wget --no-http-keep-alive -nc -i ../ch.swisstopo.swissalti3d-valais-w2550-e2623-s1075-n1130.csv
+cat ../ch.swisstopo.swissalti3d-z9valais-w2484-e2623-s1075-n1157.csv | rev | cut -d / -f1 | rev > _vrt_input.txt
+gdalbuildvrt -input_file_list _vrt_input.txt z9valais-dem.vrt
+cd ..
+time gdaldem slope $=g_zstd ch_downloads/z9valais-dem.vrt valais-lv95-slope.tif
+```
+
+
 **Merge**:
 
 Then we merge it all, reproject to WebMercator, and resample all-together.
 
-*__Note: Resolution:__* `gdalwarp` thinks the 2m resolution of the UTM-32N Aoste dataset translates roughly to 2.8 WGS "meters". But our final zlevel=16 file will have a slightly more precise resolution of 2.3 meters (see [OSM Zoom levels](https://wiki.openstreetmap.org/wiki/Zoom_levels)). To avoid the loss of precision from resampling twice, we use `-tr` option to force the resolution.
+*__Note: Resolution:__* `gdalwarp` thinks the 2m resolution of the UTM-32N Aoste dataset translates roughly to 2.8 WGS "meters". But our final zlevel=16 file will have a slightly more precise resolution of 2.3 meters (see [OSM Zoom levels](https://wiki.openstreetmap.org/wiki/Zoom_levels) and this article's *Mobile* section). To avoid the loss of precision from resampling twice, we use `-tr` option to force the resolution.
 
 *__Note: Resampling:__* gdal uses *nearest* resampling by default. A insightful comparison can be found in [What is Lanczos resampling useful for in a spatial context?](https://gis.stackexchange.com/a/14361/176462). *nearest* actually seemed best for this slope overlay given that we are upsampling, and that accuracy is paramount.
 
@@ -439,6 +453,27 @@ time gdalwarp $=g_zstd $=g_tile -dstnodata 255 \
 gdal_edit.py -unsetnodata oslo-Aigle-Jouques-Sanremo-Zermatt.tif
 ```
 
+As an alternative workflow here is what I ended up using, to build a merged, reprojected 20GB slope model that I can directly convert to mbtiles (next section):
+
+```bash
+resolution=2.388657133911758
+extent='5.6250 43.5804 7.7343 46.558'
+time gdalwarp $=g_tile \
+  -co bigtiff=yes -co compress=zstd -co zstd_level=3 -co sparse_ok=true \
+  -dstnodata 255 \
+  -t_srs EPSG:3857 -tr $=resolution -$=resolution \
+  -te_srs WGS84 -te $=extent \
+  fr/ignalps-lamb-slope.tif it/piemont-utm32n-slope.tif aoste/aoste-utm32n-slope.tif \
+  alex/ignalex-lamb-slope.tif ch/valais-lv95-slope.tif \
+  alps/slopes-Lausanne-Jouques-Sanremo-Zermatt.tif
+```
+
+20 GB is quite big but:
+* increasing compression is very slow
+* using integer (bytes) instead of floats is possible but the rounding introduces a "quantization" effect after the shading step as seen on the right below:
+
+<img src="img/geo/comparison-slope-as-byte-or-float32.png" width="300">
+
 
 Mobile use
 ===============
@@ -461,41 +496,58 @@ For us, when using the automatic resolution of the 5m DEMs (ign or piemont), *AU
 *__Note: Tile format__:*
 > TILE_FORMAT=PNG/PNG8/JPEG: Format used to store tiles. See Tile formats section. Defaults to PNG.
 
-Jpeg with the default 75% quality will cut size by at least 2. It is possible to go down to 40%.
+`JPEG` with the default 75% quality will cut size by at least 50%. It is possible to go down to 40%, with some quality loss.
+
+Right now I'm using `PNG` instead to get the best quality, and used an external recompression of every PNG tile with an external tool, pngnq, to reduce PNG size by 50% without visible quality loss (with better results than the built-in `PNG8 `format). This is implemented in <a href="geo/src/mbtidime/mbtcompress.py">mbtcompress.py</a>, and takes *forever* (500 Kb/s on 8 cores so 10 hours total).
+
+It would probably be far quicker to use a single PNG palette for all images rather than recomputing it a million times.
+
+----
+
+Quantized PNG version, directly from the merged slope model:
 
 ```bash
-gdal_translate -co tile_format=jpeg -co quality=75 alps/oslo-Aigle-Jouques-Sanremo-TMS.tif alps/oslo-Aigle-Jouques-Sanremo-TMS-jpg.mbtiles
-```
+sed 's/nv    0   0   0   0/nv  255 255 255 255/g' ../gdaldem-slope-oslo.clr >! /tmp/gdaldem-slope-oslow.clr
 
-The whole 06/Alpes-Maritimes county in this format will weigh 150 MB in PNG / zoom level 14 ; or 450 MB at level 15.
+time gdaldem color-relief alps/slopes-Lausanne-Jouques-Sanremo-Zermatt.tif /tmp/gdaldem-slope-oslow.clr alps/oslos-Lausanne-Jouques-Sanremo-Zermatt-raw.mbtiles
+
+time mbtcompress.py alps/oslos-Lausanne-Jouques-Sanremo-Zermatt{-raw,}.mbtiles
+```
+The whole 06/Alpes-Maritimes county in this format will weigh 150 MB in "normal" PNG / zoom level 14 ; or 450 MB at level 15.
 
 <img src="img/geo/06_slopeshade_oslo.jpg" width="400">
 
-The Western alps as defined in the previous section weigh around 2 GB in jpg / zoom 16.
+The Western alps as defined in the previous section weigh around 4 GB in quantized png / zoom 16.
+
+<img src="img/geo/oslos-Lausanne-Jouques-Sanremo-Zermatt-ovr.png" width="400">
+
 
 Use with AlpineQuest
 ---------------
 
-Alpine will up & downsample up to 3 levels. beyond that however, it will display a transparent-blue "warning layer". To avoid it we can add some white tiles at zoom level 11 (enough to cover 9-14 range, then 15-16 will display the slopes):
+Alpine will up & downsample up to 3 levels. beyond that however, it will display a transparent-blue "warning layer". To avoid it we can add some white tiles at zoom level 12 (enough to cover 10-14 range, then only level 16 will display the slopes):
 
 We take the `-a_ullr` coordinates directly from our Z16 tif above, and compute the size by dividing its width/height (98301, 180454) by 2**5 for 5 levels.
 
 ```bash
 gdal_create $=g_zstd -outsize 3071 5639 -a_srs EPSG:3857 -a_ullr 626172 5831778 860979 5400735 -bands 3 -burn 255 white11.tif
-gdal_translate -co tile_format=jpeg -co quality=10 white11.tif white11.mbtiles
+# JPG z11
+gdal_translate -co tile_format=jpeg -co quality=10 white11.tif white11jpg.mbtiles
+# PNG z12 & z9
+gdal_translate -co tile_format=png8 -co zoom_level_strategy=upper white11.tif white12.mbtiles
+time gdal_translate -co tile_format=png8 -tr 305 305 white12.mbtiles white9.mbtiles
 ```
 
-PNG8 would be 5 times smaller but mbtiles does not support different formats, and we are now merging with some jpegs:
+PNG8 white mbtiles are 10 times smaller than JPG ones, but mbtiles does not support mixing formats, so make sure to use the correct one ;-)
 
 ```sql
-append_mbt()  # append_mbt $source $dest
+mbt_append()  # mbt_append $source $dest
 {
   echo "ATTACH \"$1\" AS low; INSERT INTO main.tiles SELECT * FROM low.tiles;" | sqlite3 $2
 }
 
-append_mbt
+append_mbt white12.mbtiles oslos-Lausanne-Jouques-Sanremo-Zermatt
 ```
-
 
 
 Use with OruxMaps
