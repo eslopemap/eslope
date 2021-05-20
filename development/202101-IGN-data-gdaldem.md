@@ -148,7 +148,7 @@ gdaldem-slope-ign.clr:
 ```
 
 ```bash
-gdaldem color-relief clapier_lamb_slope.tif gdaldem-slope-ign.clr clapier_slopeshade_ign.tif```
+gdaldem color-relief clapier_lamb_slope.tif gdaldem-slope-ign.clr clapier_slopeshade_ign.tif
 ```
 
 <img src="img/geo/clapier_slopeshade_ign.jpg" width="400">
@@ -546,7 +546,7 @@ mbt_append()  # mbt_append $source $dest
   echo "ATTACH \"$1\" AS low; INSERT INTO main.tiles SELECT * FROM low.tiles;" | sqlite3 $2
 }
 
-append_mbt white12.mbtiles oslos-Lausanne-Jouques-Sanremo-Zermatt
+mbt_append alps/white12.mbtiles alps/oslos-Lausanne-Jouques-Sanremo-Zermatt.mbtiles
 ```
 
 
