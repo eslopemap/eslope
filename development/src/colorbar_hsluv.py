@@ -6,7 +6,7 @@ from typing import List, Tuple, Union
 # import matplotlib.pyplot as plt
 # from matplotlib.colors import LinearSegmentedColormap
 import hsluv
-from colorbar import plot_mpl_palette, srgb_to_mpl_palette
+from colorbar import plot_mpl_palette, srgb_to_mpl_palette_interp
 
 # name = sys.argv[1] if len(sys.argv) > 1 else 'oslo'
 # name = 'olso'
@@ -29,7 +29,8 @@ def clr_as_hsl(clr_path, outf=sys.stdout):
             if len(elems) < 5:  # transparency: opaque by default
                 elems.append(255)
             slope, r, g, b, a = elems
-            s = "{:<8s} | {: 4d} {: 4d} {: 4d} | {: 6.0f} {: 6.0f} {: 6.0f} ".format(
+            s = "{0:<8s} | {1: 4d} {2: 4d} {3: 4d} | {4: 6.0f} {5: 6.0f} {6: 6.0f}"\
+                " | #{1:02x}{2:02x}{3:02x}".format(
                 line.strip().split()[0], int(r), int(g), int(b),
                 *hsluv.rgb_to_hsluv((r/255, g/255, b/255)))
             print(s, file=outf)
@@ -146,13 +147,13 @@ if __name__ == '__main__':
         #         (59, *hsluv.hsluv_to_rgb((266,100,33))),  # blue
         #         (60, *hsluv.hsluv_to_rgb((0,0,33))) # dark grey
         #     ]))
-        fig = plot_mpl_palette('hslo', srgb_to_mpl_palette(palette))
+        fig = plot_mpl_palette('hslo', srgb_to_mpl_palette_interp(palette))
         fig.savefig('../../img/geo/hslo-colormap-gradient.png')
         fig.show()
-        fig = plot_mpl_palette('hslo1', srgb_to_mpl_palette(palette1))
+        fig = plot_mpl_palette('hslo1', srgb_to_mpl_palette_interp(palette1))
         fig.savefig('../../img/geo/hslo1-colormap-gradient.png')
         fig.show()
-        fig = plot_mpl_palette('hslo2', srgb_to_mpl_palette(palette2))
+        fig = plot_mpl_palette('hslo2', srgb_to_mpl_palette_interp(palette2))
         fig.savefig('../../img/geo/hslo2-colormap-gradient.png')
         fig.show()
 
@@ -162,7 +163,7 @@ if __name__ == '__main__':
 # TODO:
 # take an input clr (eventually, osloed but 'simplified' ie without the manual stops)
 # convert each 'stop' to hsl
-# interpolate between stops, with intervals of 0.3° (eg 29,30 -> 29,29.3,29.6,29.9,30) -- or 3° if < 30
+# interpolate between stops, with intervals of 0.5° (eg 29,30 -> 29,29.5,30) -- or 3° if < 30
 # convert back to hsl ; write to stdout
 # (colormap.py can then take from stdin)
 # why? see https://j.holmes.codes/20150808-better-color-gradients-with-hsluv/

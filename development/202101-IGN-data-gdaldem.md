@@ -407,7 +407,7 @@ Then we merge it all, reproject to WebMercator, and resample all-together.
 
 *__Note: Resolution:__* `gdalwarp` thinks the 2m resolution of the UTM-32N Aoste dataset translates roughly to 2.8 WGS "meters". But our final zlevel=16 file will have a slightly more precise resolution of 2.3 meters (see [OSM Zoom levels](https://wiki.openstreetmap.org/wiki/Zoom_levels) and this article's *Mobile* section). To avoid the loss of precision from resampling twice, we use `-tr` option to force the resolution.
 
-*__Note: Resampling:__* gdal uses *nearest* resampling by default. A insightful comparison can be found in [What is Lanczos resampling useful for in a spatial context?](https://gis.stackexchange.com/a/14361/176462). *nearest* actually seemed best for this slope overlay given that we are upsampling, and that accuracy is paramount.
+*__Note: Resampling:__* gdal uses *nearest* resampling by default. A insightful comparison can be found in [What is Lanczos resampling useful for in a spatial context?](https://gis.stackexchange.com/a/14361/176462). *nearest* actually seemed best for this slope overlay given that we are upsampling, and that accuracy is paramount. However stuff like hillshading will have artifacts, in that case it's better to shade before reprojection.
 
 <img src="https://i.stack.imgur.com/Lw6ei.png" width="626">
 
@@ -474,6 +474,7 @@ time gdalwarp $=g_tile \
 
 <img src="img/geo/comparison-slope-as-byte-or-float32.png" width="300">
 
+This is only an issue if you intend to use continuous gradient palettes, or discrete palettes with integer cutoffs.
 
 Mobile use
 ===============
