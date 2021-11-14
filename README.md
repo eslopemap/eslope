@@ -32,22 +32,16 @@ I use go-pmtiles, but many alternatives exist including [MapTiler tileserver](ht
 
 The area covered currently is *a part of* the western alps, in GPS terms from lower-left [43.580 N 5.625 E](https://www.openstreetmap.org/?lat=43.580&lon=5.625&zoom=15) to upper-right [46.558 N 7.734E](https://www.openstreetmap.org/?lat=46.558&lon=7.734&zoom=15), or as a mnemonic, Lausanne-Jouques-Sanremo-Zermatt. Some (lower elevation) areas are not covered.
 
-Outside of this area, you can use SRTM data.
+### Zoom-levels:
+* Only [zoom-level](https://wiki.openstreetmap.org/wiki/Zoom_levels) 16 is provided so far (other levels are filled white to avoid artifacts). It means an actual pixel resolution of 3.4 meters at 45° *(=2.387 /  78.648 * 111.321)*.
 
-Zoom-levels:
-* Only [zoom-level]() 16 is provided so far (other levels are filled white to avoid artifacts). It means an actual pixel resolution of around 3m at 45°
-
-Data sources:
+### Data sources:
 * France: [RGE ALTI 5m](https://geoservices.ign.fr/documentation/diffusion/telechargement-donnees-libres.html#rge-alti-5m). Mostly based on Radar, with a "real" resolution closer to 30m. ⚠️ Only *departement*s n° 04 05 06 38 73 74
 * Italy>Piemonte: *RIPRESA AEREA ICE 2009-2011 - DTM 5*, hosted [here](http://www.geoportale.piemonte.it/geonetworkrp/srv/ita/metadata.show?id=2552&currTab=rndt)
 * Italy>Aosta: [DTM 2005 / 2008 aggregato](https://geoportale.regione.vda.it/download/dtm/)
 * Switzerland: [SwissAlti3D](https://www.swisstopo.admin.ch/en/geodata/height/alti3d.html)
 
-Future work:
-* Missing french areas: 39,01,84,13 (Jura,Ain,Vaucluse,Bouches-du-Rhone)
-* Easten alps. See [openslopemap data-sources](https://www-openslopemap-org.translate.goog/projekt/hintergrundinformationen/?_x_tr_sl=de&_x_tr_tl=en&_x_tr_hl=en-GB&_x_tr_pto=nui)
-
-For details on the process: [IGN-data-gdaldem](https://github.com/eddy-geek/TIL/blob/master/202101-IGN-data-gdaldem.md)
+For details on the data wrangling process: [IGN-data-gdaldem](https://github.com/eddy-geek/TIL/blob/master/202101-IGN-data-gdaldem.md)
 
 # Links
 * A tutorial for Austrian elevation data: [terrain-rgb](https://github.com/syncpoint/terrain-rgb)
