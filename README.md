@@ -1,14 +1,20 @@
-# eslope
+# E.Slope
 
 Enhanced slope overlays for the alps, to use for hiking, ski-touring, alpinism, ...
 
-This is a sister project to openslopemap.org, with more focus on model precision for the western alps, different techincal and aesthetical choices, and detailed documentation. Kudos to the OpenSlopeMap team for the inspiring work!
+<img src="img/malinvern_s_eslo14near.png" width="400"
+     style="display: block; margin-left: auto; margin-right: auto;"/>
+<figcaption style="background-color: #222; color: #fff; font: italic smaller sans-serif; padding: 3px; text-align: center">
+E.Slope around Mont Malinvern. <br/>
+Note the lower precision of the french side (bottom-left)
+</figpcaption>
+
 
 # Status
 Downloads are available. Tile hosting is available, but stability is not guaranteed.
 
 # Palette used
-<img src="img/colormap-eslo14.png" width="600"><br>
+<img src="img/colormap-eslo14.png" width="600"/><br/>
 For a discussion of the design process behind this palette, and a comparison, see [geo-slope-color-palette](https://github.com/eddy-geek/TIL/blob/master/202105-geo-slope-color-palette.md).
 
 # How to use the maps online?
@@ -51,6 +57,8 @@ The area covered currently is *a part of* the western alps, in GPS terms from lo
 For details on the data wrangling process: [IGN-data-gdaldem](https://github.com/eddy-geek/TIL/blob/master/202101-IGN-data-gdaldem.md)
 
 # Links
+* [openslopemap.org](https://www.openslopemap.org/). E.Slope is very similiar in spirit, but with more focus on model precision for the western alps, different technical and aesthetical choices, and an open development process. Kudos to the OpenSlopeMap team for the inspiring work!
+
 * A tutorial for Austrian elevation data: [terrain-rgb](https://github.com/syncpoint/terrain-rgb)
 * Hosting [tiling-notes](https://gist.github.com/smnorris/4866ac1c17a37cab907d11d20de491dc)
 
