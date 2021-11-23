@@ -144,6 +144,7 @@ Here is the colormap:
 <img src="geo/data/colormap-oslo8near.png" width="400"><br>
 <img src="geo/data/colormap-eslo14near.png" width="400"><br>
 <img src="geo/data/colormap-cslo.png" width="400">
+<img src="geo/data/colormap-sorbet.png" width="400">
 
 And let's wrap-up with the corresponding samples:
 
@@ -155,6 +156,6 @@ To use the palette follow the [IGN-data-gdaldem](202101-IGN-data-gdaldem.md) ins
 time gdaldem color-relief \
   slopes-Lausanne-Jouques-Sanremo-Zermatt.tif \
   /tmp/gdaldem-slope-oslo14w.clr \
-  eslo14-Lausanne-Jouques-Sanremo-Zermatt.mbtiles \
-  -nearest_color_entry -co TILE_FORMAT=png8
+  eslo14t-Lausanne-Jouques-Sanremo-Zermatt.mbtiles \
+  -nearest_color_entry -co TILE_FORMAT=png8 -co BLOCKSIZE=1024
 ```
