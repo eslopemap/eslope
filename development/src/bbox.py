@@ -24,6 +24,10 @@ class BBox:
             raise ArithmeticError()
         return BBox(max(rect1.w, rect2.w), max(rect1.s, rect2.s),\
                     min(rect1.e, rect2.e), min(rect1.n, rect2.n))
+    def astuple(self):
+        return astuple(self)
+    def __str__(self) -> str:
+        return f'{self.w} {self.s} {self.e} {self.n}'
 
 bbwalps = BBox(5.625, 43.581, 7.734, 46.558)
 bbcalps = BBox(7.734, 45.583, 11.249, 47.517)

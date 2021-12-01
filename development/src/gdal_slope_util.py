@@ -15,7 +15,7 @@ except ImportError:
     def check_run(cmd):
         return check_call(cmd, shell=True)
 
-from mbt_util import mbt_merge
+from .mbt_util import mbt_merge
 
 resolutions = [
     156543.033928041, 78271.51696402048, 39135.758482010235, 19567.87924100512,
@@ -29,9 +29,10 @@ CMAPDIR = '~/code/eddy-geek/TIL/geo/data'
 
 ZSTD_OPT='-co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=1 '
 TILE_OPT='-co TILED=YES -co blockXsize=1024 -co blockYsize=1024 '
-PARAL_OPT='-co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS ' # <- || compression, warp and compute
-EXTRA_OPT='-co BIGTIFF=YES -overwrite '
-DFLT_OPT = ZSTD_OPT + TILE_OPT + PARAL_OPT + EXTRA_OPT
+XTIFF_OPT='-co BIGTIFF=YES -co SPARSE=TRUE -co NUM_THREADS=ALL_CPUS '
+WARP_PARAL_OPT='-multi -wo NUM_THREADS=ALL_CPUS ' # <- || compression, warp and compute
+DFLT_OPT = ZSTD_OPT + TILE_OPT + XTIFF_OPT
+DFLT_WARP_OPT = ZSTD_OPT + TILE_OPT + XTIFF_OPT + WARP_PARAL_OPT + '-overwrite '
 
 def isfile(path):
     return os.path.isfile(os.path.expanduser(os.path.expandvars(path)))
@@ -39,7 +40,7 @@ def isfile(path):
 
 def gdalwarp(w, s, e, n, *,
         src, dest, z=16, precision='-ot Byte', mode='nearest',
-        default_opt=DFLT_OPT, extra_opt='', reuse=False):
+        default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
     tr = resolutions[z]
     if reuse and isfile(dest): print('Reuse', dest) ; return 0
     cmd = f'''\
@@ -60,7 +61,7 @@ def make_western_alps(w, s, e, n, *,
             'alex/ignalex-lamb-slope.tif',
             'ch/valais-lv95-slope.tif'),
         dest='', z=16, precision='-ot Byte',
-        default_opt=DFLT_OPT,
+        default_opt=DFLT_WARP_OPT,
         extra_opt='', reuse=False):
     mode='nearest' if z == 16 else 'q3'
     dest = dest or 'AlpsW-slopes-z{z}.tif'
@@ -72,7 +73,7 @@ def make_western_alps(w, s, e, n, *,
 
 
 def cut_extent(w, s, e, n, *, src, dest='', z=16, precision='-ot Byte',
-    default_opt=DFLT_OPT, extra_opt='', reuse=False):
+    default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
     """`w s n e` : extent values
     :param precision: in decreasing order: -ot Float32 ; -co nbits=16 (p=0.03); -ot Byte (p=.5)
     """
@@ -82,7 +83,7 @@ def cut_extent(w, s, e, n, *, src, dest='', z=16, precision='-ot Byte',
 
 
 def make_ovr(*, src, dest='', z,
-             default_opt=DFLT_OPT, extra_opt='', reuse=False):
+             default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
     tr = resolutions[z]
     dest = dest or re.sub(r'(z\d\d?\b)|(\.[^.]+)$', rf'z{z}\2', src, count=1)
     if reuse and isfile(dest): print('Reuse', dest) ; return 0
