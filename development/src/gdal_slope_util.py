@@ -29,7 +29,7 @@ CMAPDIR = '~/code/eddy-geek/TIL/geo/data'
 
 ZSTD_OPT='-co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=1 '
 TILE_OPT='-co TILED=YES -co blockXsize=1024 -co blockYsize=1024 '
-XTIFF_OPT='-co BIGTIFF=YES -co SPARSE=TRUE -co NUM_THREADS=ALL_CPUS '
+XTIFF_OPT='-co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS '
 WARP_PARAL_OPT='-multi -wo NUM_THREADS=ALL_CPUS ' # <- || compression, warp and compute
 DFLT_OPT = ZSTD_OPT + TILE_OPT + XTIFF_OPT
 DFLT_WARP_OPT = ZSTD_OPT + TILE_OPT + XTIFF_OPT + WARP_PARAL_OPT + '-overwrite '
@@ -67,7 +67,7 @@ def make_western_alps(w, s, e, n, *,
     dest = dest or 'AlpsW-slopes-z{z}.tif'
     dest = os.path.realpath(dest)
     extra_opt += ' -dstnodata 255 '
-    with Path(datafolder):
+    with Path(datafolder):  # <- FIXME
         gdalwarp(w=w, s=s, e=e, n=n, src=src, dest=dest, z=z, precision=precision, mode=mode,
                  default_opt=default_opt, extra_opt=extra_opt, reuse=reuse)
 
