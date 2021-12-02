@@ -16,6 +16,7 @@ except ImportError:
         return check_call(cmd, shell=True)
 
 from .mbt_util import mbt_merge
+from .bbox import BBox
 
 resolutions = [
     156543.033928041, 78271.51696402048, 39135.758482010235, 19567.87924100512,
@@ -38,48 +39,66 @@ def isfile(path):
     return os.path.isfile(os.path.expanduser(os.path.expandvars(path)))
 
 
-def gdalwarp(w, s, e, n, *,
-        src, dest, z=16, precision='-ot Byte', mode='nearest',
-        default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
-    tr = resolutions[z]
+def gdalwarp(src:str, dest:str, z=16, precision='', mode='nearest',
+        extent='', default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
+    """ Gdalwarp wrapper
+        :param z: to reproject/resample to a TMS zoom level `z`
+        :param extent: eg `-te w s e n` in WGS84
+        :param default_opt: to override default compression/tiling/tif etc
+        :param extra_opt: any additional option"""
     if reuse and isfile(dest): print('Reuse', dest) ; return 0
+    tr = '' if not z else \
+         f'-tr {resolutions[z]} -{resolutions[z]}'
+    if isinstance(extent, BBox):
+        extent = f'-te {extent}'
     cmd = f'''\
       gdalwarp {precision} \\
-        {default_opt} {extra_opt} \\
-        -t_srs EPSG:3857 -tr {tr} -{tr} -r {mode} \\
-        -te_srs WGS84 -te {w} {s} {e} {n} \\
+        {default_opt} \\
+        -t_srs EPSG:3857 {tr} -r {mode} \\
+        -te_srs WGS84 {extent} {extra_opt} \\
         {src} {dest}'''
     print(cmd)
     check_run(cmd)
 
 
-def make_western_alps(w, s, e, n, *,
-        datafolder,
-        src=('fr/ignalps-lamb-slope.tif',
-            'it/piemont-utm32n-slope.tif',
-            'aoste/aoste-utm32n-slope.tif',
-            'alex/ignalex-lamb-slope.tif',
-            'ch/valais-lv95-slope.tif'),
-        dest='', z=16, precision='-ot Byte',
-        default_opt=DFLT_WARP_OPT,
-        extra_opt='', reuse=False):
+def merge_slopes(*,
+        src: str, dest: str, z=16, precision='-ot Byte',
+        extent='', default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
+    """Merge/reproject/resample to a TMS zoom level `z`
+       Also rounds to Byte by default"""
     mode='nearest' if z == 16 else 'q3'
-    dest = dest or 'AlpsW-slopes-z{z}.tif'
-    dest = os.path.realpath(dest)
-    extra_opt += ' -dstnodata 255 '
-    with Path(datafolder):  # <- FIXME
-        gdalwarp(w=w, s=s, e=e, n=n, src=src, dest=dest, z=z, precision=precision, mode=mode,
-                 default_opt=default_opt, extra_opt=extra_opt, reuse=reuse)
+    extra_opt += ' -dstnodata 255 '  # to go with -ot Byte
+    gdalwarp(src=src, dest=dest, z=z, precision=precision, mode=mode,
+             extent=extent, default_opt=default_opt, extra_opt=extra_opt, reuse=reuse)
 
 
-def cut_extent(w, s, e, n, *, src, dest='', z=16, precision='-ot Byte',
-    default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
-    """`w s n e` : extent values
+# def make_western_alps(*,
+#         datafolder,
+#         src=('fr/ignalps-lamb-slope.tif',
+#             'it/piemont-utm32n-slope.tif',
+#             'aoste/aoste-utm32n-slope.tif',
+#             'alex/ignalex-lamb-slope.tif',
+#             'ch/valais-lv95-slope.tif'),
+#         dest='', z=16, precision='-ot Byte',
+#         default_opt=DFLT_WARP_OPT,
+#         extra_opt='', reuse=False):
+#     mode='nearest' if z == 16 else 'q3'
+#     dest = dest or 'AlpsW-slopes-z{z}.tif'
+#     dest = os.path.realpath(dest)
+#     extra_opt += ' -dstnodata 255 '
+#     with Path(datafolder):  # <- FIXME
+#         gdalwarp(w=w, s=s, e=e, n=n, src=src, dest=dest, z=z, precision=precision, mode=mode,
+#                  default_opt=default_opt, extra_opt=extra_opt, reuse=reuse)
+
+
+def cut_extent(*, src, dest='', z=16, precision='-ot Byte',
+    extent='', default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
+    """
     :param precision: in decreasing order: -ot Float32 ; -co nbits=16 (p=0.03); -ot Byte (p=.5)
     """
     dest = dest or f'./slopes-z{z}.tif'
-    gdalwarp(w=w, s=s, e=e, n=n, src=src, dest=dest, z=z, precision=precision,
-             default_opt=default_opt, extra_opt=extra_opt, reuse=reuse)
+    gdalwarp(src=src, dest=dest, z=z, precision=precision,
+             extent=extent, default_opt=default_opt, extra_opt=extra_opt, reuse=reuse)
 
 
 def make_ovr(*, src, dest='', z,
@@ -145,3 +164,10 @@ def make_overviews(src, reuse=False):
         print(f'Step {i+1}/{len(zooms)} completed in {round(time()-chkpoint,1)} seconds')
 
     mbt_merge(*files, dest=final_mbt)
+
+
+def eslo_tiny(dtm_path: str, cname='eslo13near'):
+    cmap = f'{CMAPDIR}/gdaldem-slope-{cname}.clr'
+    check_run(f'gdaldem slope {dtm_path} {DFLT_OPT} /tmp/tiny_slope.tif')
+    check_run(f'gdaldem color-relief /tmp/tiny_slope.tif {cmap} /tmp/tiny_{cname}.png -nearest_color_entry')
+

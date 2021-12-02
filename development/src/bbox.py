@@ -1,6 +1,7 @@
 import sys
 assert sys.version_info >= (3,7)
 from dataclasses import dataclass, astuple
+from unittest import TestCase
 
 @dataclass
 class BBox:
@@ -32,14 +33,20 @@ class BBox:
 bbwalps = BBox(5.625, 43.581, 7.734, 46.558)
 bbcalps = BBox(7.734, 45.583, 11.249, 47.517)
 bbealps = BBox(11.249, 46.073, 14.062, 47.754)
-foo = BBox(7.7, 46.5, 7.8, 46.6)
 
-assert not bbwalps.intersect(bbcalps)
-assert not bbcalps.intersect(bbealps)
-assert not bbealps.intersect(bbwalps)
-assert foo.intersect(bbcalps)
-assert foo.intersect(bbwalps)
-assert bbcalps.intersect(foo)
-assert bbwalps.intersect(foo)
-assert not foo.intersect(bbealps)
-assert not bbealps.intersect(foo)
+bbmontblancz10 = BBox(6.855466, 45.828796, 7.207031, 45.951147)
+
+
+foo = BBox(7.7, 46.5, 7.8, 46.6)
+class BboxTest(TestCase):
+
+    def test_intersect(self):
+        assert not bbwalps.intersect(bbcalps)
+        assert not bbcalps.intersect(bbealps)
+        assert not bbealps.intersect(bbwalps)
+        assert foo.intersect(bbcalps)
+        assert foo.intersect(bbwalps)
+        assert bbcalps.intersect(foo)
+        assert bbwalps.intersect(foo)
+        assert not foo.intersect(bbealps)
+        assert not bbealps.intersect(foo)
