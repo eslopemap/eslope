@@ -105,35 +105,35 @@ Even oslo provides arguably little improvement (or even a degradation of clarity
 
 Let's go back to the drawing board.
 We want to:
-* replace green as it's unclear on maps with green forests. Maybe light cyan, eg RGB 232 252 255 used for OpenTopoMap glaciers. For 22-28°
-* separate the 55-60° category, adding grey (RGB 77  77  77) for >60°
+* __Show "gentle" slopes__, but not with green as it's unclear on maps with green forests. I'm using a cyan quite close to OpenTopoMap glaciers (which are RGB 232 252 255), but there are definitely less conflicts than with forests.
+* __separate the 55-60° category__, adding grey (RGB 77  77  77) for >60°
 * make magenta more distinct from red
-*  cutoff points at .5°, to go well with an integer slope input.
+* __cutoff points__ at .5°, to go well with an integer slope input (less temporary disk space ;)).
+* at some point I considered having an even lower slope with `15-19°  17 |  230  255  255 |    192    98 | #e6ffff  light cyan / bubbles`. But this was invisible and not that useful. You can find it as [eslo14.clr]("geo/data/gdaldem-slope-eslo14near.clr)
 
 ... while still respecting the overall luminance ordering.
 
-You can see the result as [eslo14.clr]("geo/data/gdaldem-slope-eslo14near.clr).
+You can see the result as [eslo13.clr]("geo/data/gdaldem-slope-eslo13near.clr).
 
-It has with more colors and cut off points
+It has more colors and cut off points
 `19⁵ (24⁵) 28⁵ (31⁵) 34⁵ (37⁵) 40⁵ (43⁵) 46⁵ (49⁵) 53⁵ 59⁵` for
 ` cyan     yellow    orange    red       purple   blue grey`
 
 ```py
-slope  nearest| R    G    B |      H     L | HTML     color
- 0-14°  12 |  255  255  255 |      0   100 | #ffffff  white
-15-19°  17 |  230  255  255 |    192    98 | #e6ffff  light cyan / bubbles
-20-24°  22 |  170  255  255 |    192    95 | #aaffff  pale turquoise / celeste
-25-28°  27 |   86  255  255 |    192    92 | #56ffff  cyan
-29-31°  30 |  240  225    0 |     80    88 | #f0e100  titanium yellow
-32-34°  33 |  245  191    0 |     61    80 | #f5bf00  golden poppy
-35-37°  36 |  255  155    0 |     40    73 | #ff9b00  orange peel
-38-40°  39 |  255  105    0 |     24    63 | #ff6900  dark orange 2
-41-43°  42 |  255    0    0 |     12    53 | #ff0000  red
-44-46°  45 |  220    0  245 |    299    54 | #dc00f5  magenta 2
-47-49°  48 |  167   25  255 |    282    47 | #a719ff  purple
-50-53°  51 |  110    0  255 |    272    39 | #6e00ff  electric indigo / violet
-54-60°  56 |    0    0  255 |    266    32 | #0000ff  blue
-61-90°  65 |   77   77   77 |      0    33 | #4d4d4d  gray 30
+slope  nearest| R    G    B |      H     L  | HTML     color
+ 0-19°  12 |  255  255  255 |      0   100  | #ffffff  white
+20-24°  22 |  170  255  255 |    192    95  | #aaffff  pale turquoise / celeste
+25-28°  27 |   86  255  255 |    192    92  | #56ffff  cyan
+29-31°  30 |  240  225    0 |     80    88  | #f0e100  titanium yellow
+32-34°  33 |  245  191    0 |     61    80  | #f5bf00  golden poppy
+35-37°  36 |  255  155    0 |     40.3  72.7| #ff9b00  orange peel
+38-40°  39 |  255  105    0 |     24    63  | #ff6900  dark orange 2
+41-43°  42 |  255    0    0 |     12.2  53.2| #ff0000  red
+44-46°  45 |  220    0  245 |    299.5  53.8| #dc00f5  magenta 2
+47-49°  48 |  167   25  255 |    282    47  | #a719ff  purple
+50-53°  51 |  110    0  255 |    272    39  | #6e00ff  electric indigo / violet
+54-60°  56 |    0    0  255 |    266    32  | #0000ff  blue
+61-90°  65 |   77   77   77 |      0    33  | #4d4d4d  gray 30
 
 ```
 
@@ -157,5 +157,45 @@ time gdaldem color-relief \
   slopes-Lausanne-Jouques-Sanremo-Zermatt.tif \
   /tmp/gdaldem-slope-oslo14w.clr \
   eslo14t-Lausanne-Jouques-Sanremo-Zermatt.mbtiles \
-  -nearest_color_entry -co TILE_FORMAT=png8 -co BLOCKSIZE=1024
+  -nearest_color_entry -co TILE_FORMAT=png8
 ```
+
+See also the simplified eslo4 palette:
+
+| Slope  | nearest |  R  |  G  |  B  |   H  |   S  |   L  | HTML    |
+| ------ | ------- | --- | --- | --- |  --- |  --- |  --- |  ---    |
+|  0-30° | 24.5    | 255 | 255 | 255 |  0   |  0   |100   | #FFFFFF |
+| 30-40° | 34.5    | 248 | 212 |  85 | 68.2 | 84.6 | 85.9 | #F8D455 |
+| 40-50° | 44.5    | 231 | 85  | 248 |301.5 | 93.5 | 61.9 | #E755F8 |
+| 50-90° | 54.5    | 136 | 136 | 136 |  0   |  0   | 56   |
+
+https://htmlcolorcodes.com/fr/rgb-a-hex/?r=231&g=85&b=248
+
+# eslo: overview
+
+The idea is to have a less disturbing but similar palette for overviews (lower zoom-levels).
+## Note on PNG8 in GDAL
+
+My idea was to keep a few of the same colors, and play with transparency. However:
+
+> at that time, such an 8-bit PNG formulation is **only used for fully opaque tiles** [...] even if PNG8 format would potentially allow color table with transparency.
+
+but actually, since we use blend-multiply, we don't need true transparency, because given an overlay color "R G B" the following are equivalent:
+* add X% transparency then blend
+* average R, G, B with white ie 255 (weighted-average by 100-X%), then blend
+
+
+eg for 60% transparency:
+```
+34.5     245 191   0 170
+44.5     220   0 245 170
+54.5      77  77  77 170
+```
+becomes
+```
+34.5     248 212 85
+44.5     231 85 248
+54.5     136 136 136
+```
+
+This is the basis for eslo4near, that I use at zoom levels 13 and 14.
