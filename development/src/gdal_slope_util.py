@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from posixpath import realpath
 import re
 from subprocess import check_call, CalledProcessError
 from time import time
@@ -28,7 +29,8 @@ resolutions = [
 
 CMAPDIR = '~/code/eddy-geek/TIL/geo/data'
 
-ZSTD_OPT='-co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=1 '
+# ZSTD_LEVEL=3 bring an additional 15-20% at +60% processing cost, compared to L=1
+ZSTD_OPT='-co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=3 '
 TILE_OPT='-co TILED=YES -co blockXsize=1024 -co blockYsize=1024 '
 XTIFF_OPT='-co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS '
 WARP_PARAL_OPT='-multi -wo NUM_THREADS=ALL_CPUS ' # <- || compression, warp and compute
@@ -166,8 +168,36 @@ def make_overviews(src, reuse=False):
     mbt_merge(*files, dest=final_mbt)
 
 
-def eslo_tiny(dtm_path: str, cname='eslo13near'):
+def eslo_tiny(path: str, cname='eslo13near', res=0, where='/tmp'):
+    """For quick overviews. If file is big, use eg res=200. Detects `slope` in file name"""
+    is_slope = 'slope' in os.path.basename(path)  # already a slope
+    if res:
+        p_tiny = where + '/tiny.tif'
+        cmd = f'gdalwarp -overwrite -tr {res} -{res} {path} {p_tiny}'
+        print(cmd); check_run(cmd)
+        path = p_tiny
+    p_slope = where + '/tiny_slope.tif'
+    if is_slope:
+        check_run(f'ln -sf {path} {p_slope}')
+    else:
+        cmd = f'gdaldem slope {path} {DFLT_OPT} {p_slope}'
+        print(cmd); check_run(cmd)
     cmap = f'{CMAPDIR}/gdaldem-slope-{cname}.clr'
-    check_run(f'gdaldem slope {dtm_path} {DFLT_OPT} /tmp/tiny_slope.tif')
-    check_run(f'gdaldem color-relief /tmp/tiny_slope.tif {cmap} /tmp/tiny_{cname}.png -nearest_color_entry')
+    p_relief = f'{where}/tiny_{cname}.png'
+    cmd = f'gdaldem color-relief {p_slope} {cmap} {p_relief} -nearest_color_entry'
+    print(cmd); check_run(cmd)
+    return p_relief
 
+def relief_tiny(path: str, res=0, where='/tmp'):
+    """For quick overviews. If file is big, use eg res=200. Detects `slope` in file name"""
+    assert not 'slope' in os.path.basename(path)
+    cmap = CMAPDIR + '/gdaldem-relief9.clr'
+    if res:
+        p_tiny = where + '/tiny.tif'
+        cmd = f'gdalwarp -overwrite -tr {res} -{res} {path} {p_tiny}'
+        print(cmd); check_run(cmd)
+        path = p_tiny
+    p_relief = f'{where}/tiny_relief.png'
+    cmd = f'gdaldem color-relief {path} {cmap} {p_relief}'
+    print(cmd); check_run(cmd)
+    return p_relief
