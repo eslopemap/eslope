@@ -117,20 +117,20 @@ def make_ovr(*, src, dest='', z,
     return dest
 
 
-def slope_mbt(cname:str, *, z:int, options='', src='', reuse=False):
+def slope_mbt(cname:str, *, z:int, options='', src='', dest='', reuse=False):
     """ Transforms DEM into color-coded slope mbtiles.
         :input cname: colorname eg `eslo13near`, to be found in `CMAPDIR/gdaldem-slope-{cname}.clr`
         :input zlevel: eg `16`
         :input options: gdaldem options eg `-alpha`
     """
     src = src or f'./slopes-z{z}.tif'
-    dest = f'./{cname}-z{z}.mbtiles'
+    dest = dest or f'./{cname}-z{z}.mbtiles'
     if reuse and isfile(dest): print('Reuse', dest) ; return dest
     cmap = f'gdaldem-slope-{cname}.clr'
-    cmd = f'''\
-      sed 's/nv    0   0   0   0/nv  255 255 255 255/g' \\
-          {CMAPDIR}/{cmap} >! /tmp/{cmap} && \\
-      gdaldem color-relief {src} /tmp/{cmap} {dest} \\
+    cmd = rf'''\
+      sed 's/nv \+0 \+0 \+0/nv  255 255 255/g' \
+          {CMAPDIR}/{cmap} >! /tmp/{cmap} && \
+      gdaldem color-relief {src} /tmp/{cmap} {dest} \
           -nearest_color_entry -co TILE_FORMAT=png8 {options}'''
     print(cmd)
     check_run(cmd)
@@ -194,7 +194,7 @@ def relief_tiny(path: str, res=0, where='/tmp'):
     cmap = CMAPDIR + '/gdaldem-relief9.clr'
     if res:
         p_tiny = where + '/tiny.tif'
-        cmd = f'gdalwarp -overwrite -tr {res} -{res} {path} {p_tiny}'
+        cmd = f'gdalwarp -overwrite {WARP_PARAL_OPT} -tr {res} -{res} {path} {p_tiny}'
         print(cmd); check_run(cmd)
         path = p_tiny
     p_relief = f'{where}/tiny_relief.png'
