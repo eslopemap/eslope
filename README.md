@@ -52,17 +52,17 @@ The area covered currently is *a part of* the western alps, in GPS terms from lo
 
 *W/C/E stands for Western / Central /Western Alps*
 
-| Dataset      | W | C | E | Res | Projection        | Dataset name                                 | DTM.tif (*GB*) | Doc / WebGIS |
-| --           | - | - | - |--  |  --                | --                                           | --             | --           |
-| FR:IGN       | ✓ | - | - |5/40m| `2154` Lambert93  | RGE ALTI 5m                                  | [ignalps_dtm.tif] *4*   | [geoservices.ign.fr][1] / [geoportail.gouv.fr][2] |
-| IT:Piemont   | ✓ | ✓ | - |  5m | `32632` WGS84/32N | RIPRESA AEREA ICE 2009-2011 - DTM 5          | <!--TODO-->             | [geoportale.piemonte.it][3] |
-| IT:Aoste     | ✓ | ✓ | - |  2m | `23032` ED50/32N  | DTM 2005 / 2008 aggregato                    | <!--TODO-->             | [geoportale.regione.vda.it][5] |
-| CH:SwissTopo | - | ✓ | - |  2m | `2056` LV95/LN02  | swissALTI3D                                  | [chc_dtm.tif] *18* | [swisstopo.admin.ch][7] / [map.geo.admin.ch][8] |
-| IT:Lombardia | - | ✓ | - |  5m | `32632` WGS84/32N | DTM 5X5 - Modello digitale del terreno 2015  | [lombardia_dtm.tif] *1* | [geoportale.regione.lombardia.it][15] |
-| IT:Trentino  | - | ✓ | ✓ |1/2m | `25832` ETRS89/32N | LiDAR PAT 2014 integrato con voli 2018      | <!--TODO-->  | [territorio.provincia.tn.it][9] / [siat.provincia.tn.it][10] |
-| IT:Sud-Tyrol | - | ✓ | ✓ |2.5m | `25832` ETRS89/32N | Digitales Geländemodell Südtirols (DGM 2,5m)| [styrol_dtm.tif] *2* | / [geokatalog.buergernetz.bz.it][11] |
-| DE:Bavaria   | - | - | ✓ | 50m | | 50m |  [bavaria_dtm.tif] *0.2* | |
-| AT:Tyrol     | - | ✓ | ✓ |  5m |`31254` MGI/AustriaW| Digitales Geländemodell Tirol, 5m  | [tyrol_dtm.tif] *1* | [tirol.gv.at][13] / [tiris.maps.arcgis.com][14]
+| Dataset      | W | C | E | Res | Projection        | Official Dataset | DTM.tif (*GB*) | Doc / WebGIS |
+| --           | - | - | - |--  |  --                | --               | --             | --           |
+| FR:IGN       | ✓ | - | - |5/40m| `2154` Lambert93  | [RGE ALTI 5m][1]                                   | [ignalps_dtm.tif] *4*   | [geoservices.ign.fr][1] / [geoportail.gouv.fr][2] |
+| IT:Piemont   | ✓ | ✓ | - |  5m | `32632` WGS84/32N | [RIPRESA AEREA ICE 2009-2011 - DTM 5][3]           | <!--TODO-->             | [geoportale.piemonte.it][3] |
+| IT:Aoste     | ✓ | ✓ | - |  2m | `23032` ED50/32N  | [DTM 2005 / 2008 aggregato][5]                     | <!--TODO-->             | [geoportale.regione.vda.it][5] |
+| CH:SwissTopo | - | ✓ | - |  2m | `2056` LV95/LN02  | [swissALTI3D][7]                                   | [chc_dtm.tif] *18*      | [swisstopo.admin.ch][7] / [map.geo.admin.ch][8] |
+| IT:Lombardia | - | ✓ | - |  5m | `32632` WGS84/32N | [DTM 5X5 - Modello digitale del terreno 2015][15]  | [lombardia_dtm.tif] *1* | [geoportale.regione.lombardia.it][15] |
+| IT:Trentino  | - | ✓ | ✓ |1/2m | `25832` ETRS89/32N | [LiDAR PAT 2014 integrato con voli 2018][9]       | [trento_dtm.tif] *18*   | [territorio.provincia.tn.it][9] / [siat.provincia.tn.it][10] |
+| IT:Sud-Tyrol | - | ✓ | ✓ |2.5m | `25832` ETRS89/32N | [Digitales Geländemodell Südtirols (DGM 2,5m)][11]| [styrol_dtm.tif] *2*    | / [geokatalog.buergernetz.bz.it][11] |
+| DE:Bavaria   | - | - | ✓ | 50m | `25832` ETRS89/32N | [Digitales Geländemodell 50 m Gitterweite][12]    |  [bavaria_dtm.tif] *0.2* | |
+| AT:Tyrol     | - | ✓ | ✓ |  5m |`31254` MGI/AustriaW| [Digitales Geländemodell Tirol, 5m][13]           | [tyrol_dtm.tif] *1* | [tirol.gv.at][13] / [tiris.maps.arcgis.com][14]
 | AT:Salzburg  | - | - | ✓ |  5m ||||
 | AT:Vorarlberg| - | - | ✓ |  5m |`31254` MGI/AustriaW| | | [data.vorarlberg.gv.at][15] / [vogis.cnv.at][16] |
 
@@ -76,6 +76,7 @@ The area covered currently is *a part of* the western alps, in GPS terms from lo
 [9]: http://www.territorio.provincia.tn.it/portal/server.pt/community/lidar/847/lidar/23954
 [10]: https://siat.provincia.tn.it/stem/
 [11]: http://geokatalog.buergernetz.bz.it/geokatalog/
+[12]: https://www.govdata.de/suchen/-/details/digitales-gelandemodell-50-m-gitterweite
 [13]: https://www.tirol.gv.at/sicherheit/geoinformation/geodaten/laserscandaten/
 [14]: https://tiris.maps.arcgis.com/apps/webappviewer/index.html?id=5e3071044cb44e76843d110baef8b138
 [15]: https://data.vorarlberg.gv.at/ogd/geographieundplanung/laserscanning-dhm.shtm
@@ -85,9 +86,9 @@ The area covered currently is *a part of* the western alps, in GPS terms from lo
 [chc_dtm.tif]: https://dtmlocal.s3.fr-par.scw.cloud/chc_dtm.tif
 [lombardia_dtm.tif]: https://dtmlocal.s3.fr-par.scw.cloud/lombardia_dtm.tif
 [styrol_dtm.tif]: https://dtmlocal.s3.fr-par.scw.cloud/styrol_dtm.tif
+[trento_dtm.tif]: https://dtmlocal.s3.fr-par.scw.cloud/trento_dtm.tif
 [tyrol_dtm.tif]: https://dtmlocal.s3.fr-par.scw.cloud/tyrol_dtm.tif
 [ignalps_dtm.tif]: https://dtmlocal.s3.fr-par.scw.cloud/ignalps_dtm.tif
-<!-- [trento_dtm.tif]: https://dtmlocal.s3.fr-par.scw.cloud/trento_dtm.tif -->
 <!-- [aoste_dtm.tif]: https://dtmlocal.s3.fr-par.scw.cloud/aoste_dtm.tif -->
 <!-- [piemont_dtm.tif]: https://dtmlocal.s3.fr-par.scw.cloud/piemont_dtm.tif -->
 
