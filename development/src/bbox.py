@@ -1,7 +1,34 @@
 import sys
 assert sys.version_info >= (3,7)
 from dataclasses import dataclass, astuple
+from typing import Tuple, cast
 from unittest import TestCase
+
+import mercantile as T
+
+
+# Mont Blanc Area
+llmidi      = T.LngLat(6.887, 45.88)
+llemosson   = T.LngLat(6.9377, 46.0672)
+llferret    = T.LngLat(7.0685, 45.8983)
+llmontets   = T.LngLat(6.93, 46)
+llmiage     = T.LngLat(6.81, 45.825)
+llmagland   = T.LngLat(6.624, 46.02)
+llflainel   = T.LngLat(6.67, 46)
+llflaine    = T.LngLat(6.69, 46)
+# ll   = T.LngLat()
+# ll   = T.LngLat()
+
+# Zmutt near Zermatt / Breuil Aoste
+llzmutt     = T.LngLat(7.7171, 46.0065)
+llbreuil    = T.LngLat(7.6393, 45.9406)
+
+# Gondo and Trasquera (Simplon pass - CH an IT)
+llgondo     = T.LngLat(8.140, 46.196)
+lltrasquera = T.LngLat(8.225, 46.21)
+
+# Resia pass
+llresia = T.LngLat(10.50, 46.83)
 
 @dataclass
 class BBox:
@@ -10,10 +37,20 @@ class BBox:
     s: float
     e: float
     n: float
+    def __post_init__(self):
+        if self.e > 40:
+            print('WARN: East>40', file=sys.stderr)
+
+    def astuple(self):
+        return cast(Tuple[float, float, float, float], astuple(self))
+    def __str__(self) -> str:
+        return f'{self.w} {self.s} {self.e} {self.n}'
+
     def enlarge(self, eps=0.001):
         return BBox(self.w - eps, self.s - eps, self.e + eps, self.n + eps)
     def round(self, digits=3):
         return BBox(round(self.w, digits),round(self.s, digits), round(self.e, digits), round(self.n, digits))
+
     def intersect(self: 'BBox', c: 'BBox'):
         b = self
         # No rectangle is on the right, nor above, each other
@@ -25,21 +62,52 @@ class BBox:
             raise ArithmeticError()
         return BBox(max(rect1.w, rect2.w), max(rect1.s, rect2.s),\
                     min(rect1.e, rect2.e), min(rect1.n, rect2.n))
-    def astuple(self):
-        return astuple(self)
-    def __str__(self) -> str:
-        return f'{self.w} {self.s} {self.e} {self.n}'
 
+    def snap_to_xyz(self: 'BBox', z:int):
+        """A bit like `mercantile.bounding_tile` but with custom z"""
+        import mercantile as T
+        w, s, e, n = self.w, self.s,  self.e, self.n
+        t1 = T.tile(w, n, z)  # NW origin (== OSM web... ; != TMS MBTiles)
+        t2 = T.tile(e, s, z)
+        t3 = T.Tile(t2.x+1, t2.y+1, z) # >T<ile
+        ul1 = T.ul(t1)
+        ul3 = T.ul(t3)
+        # print(t1,t2,t3,ul1,ul3)
+        return BBox(w=ul1.lng, s=ul3.lat, e=ul3.lng, n=ul1.lat)
+
+
+# BBox used for the slope maps
 bbwalps = BBox(5.625, 43.581, 7.734, 46.558)
-bbsalps = BBox(7.734, 45.583, 11.249, 47.517)
+# bbsalps = BBox(7.734, 45.583, 11.250, 47.517) # "Small" central europe
 bbcalps = BBox(7.734, 45.583, 11.953, 47.517)
-bbealps = BBox(11.249, 46.073, 14.062, 47.754)
+bbealps = BBox(11.953, 46.073, 14.062, 47.754)
+bbwalps_p = BBox(5.624999, 43.580393, 7.734378, 46.558862)
+bbsalps_p = BBox(7.734378, 45.583291, 11.249998, 47.517202)
+# bbcalps_p = BBox(7.734378, 45.583291, 11.953127, 47.517202)
+bbealps_p = BBox(11.953127, 46.073229, 14.062497, 47.754101)
 
 bbmontblancz10 = BBox(6.855466, 45.828796, 7.207031, 45.951147)
 
+# Kompass south-west: Como-Starlex ✓
+bbkcomo = BBox(9.140628, 45.829, 10.371093, 46.679594)
+# Kompass Dolomites, split to align with bccalps<>bbealps (11.953) ✓
+bbkdolow = BBox(10.371094, 45.829, 11.953124, 47.5172)
+# Kompass Dolomites east, up to where the nice map stops
+bbkdoloe = BBox(11.953125, 46.437856, 12.480468, 47.754093)
+# Kompass Mittersil-Salzbourg-Klagenfurt
+bbksalzbourg = BBox(12.480469, 46.558861, 14.238281, 47.754093)
+
+bbkeast = BBox(11.953125, 46.073231, 12.832, 47.754093)
 
 foo = BBox(7.7, 46.5, 7.8, 46.6)
-class BboxTest(TestCase):
+
+class BBoxTest(TestCase):
+
+    def test_snap(self):
+        self.assertEqual(foo.snap_to_xyz(1), BBox(0.0, 0.0, 180.0, 85.0511287798066))
+        self.assertEqual(foo.snap_to_xyz(2), BBox(0.0, 0.0, 90.0, 66.51326044311186))
+        self.assertEqual(foo.snap_to_xyz(9), BBox(7.03125, 46.07323062540836, 8.4375, 47.04018214480666))
+        self.assertEqual(foo.snap_to_xyz(16),BBox(7.6959228515625, 46.498392258597626, 7.80029296875, 46.600393037345476))
 
     def test_intersect(self):
         assert not bbwalps.intersect(bbcalps)
