@@ -110,8 +110,10 @@ def plot_mpl_palette(name, cdict, is_nearest):
 
 
 if __name__ == '__main__':
-    name = sys.argv[1] if len(sys.argv) > 1 else 'oslo'
-    is_nearest = 'near' in name
+    if len(sys.argv) != 3:
+        print(sys.argv[0], '<-n/-c> <name>'); sys.exit(1)
+    _, mode, name = sys.argv
+    is_nearest = sys.argv[1] == '-n'
     src = 'gdaldem-slope-{}.clr'.format(name)
     dest = 'colormap-' + name
     print (src, '->', dest)
