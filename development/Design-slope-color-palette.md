@@ -27,22 +27,22 @@ Everyone has his own answer:
 
 # "oslo8", QGIS vs gdal palettes
 
-The palette definition I got from an OpenSlopeMap dev is [this QGIS qml file](geo/data/OpenSlopeMap_Overlay_Style.qml) which is actually 8-color, as it foregoes the green band. The file is a QGIS *discrete color-ramp*.
+The palette definition I got from an OpenSlopeMap dev is [this QGIS qml file](data/OpenSlopeMap_Overlay_Style.qml) which is actually 8-color, as it foregoes the green band. The file is a QGIS *discrete color-ramp*.
 
 > Discrete: the color is taken from the closest color map entry with equal or higher value *([source](https://docs.qgis.org/3.22/en/docs/pyqgis_developer_cookbook/raster.html))*
 
-So each line reads as "if slope < *value* ..." and the cut-off point are actually: 29, 34, 39, 42, 44.5, 49.5, 54.5°, always pertaining to previous color eg 29° = green. Here is the corresponding gdal palette [oslo8ex](geo/data/gdaldem-slope-oslo8ex.clr).
+So each line reads as "if slope < *value* ..." and the cut-off point are actually: 29, 34, 39, 42, 44.5, 49.5, 54.5°, always pertaining to previous color eg 29° = green. Here is the corresponding gdal palette [oslo8ex](data/gdaldem-slope-oslo8ex.clr).
 
-The equivalent `-nearest_color_entry` palette [oslo8near](geo/data/gdaldem-slope-oslo8near.clr) would be centered on: 28 white, 30 yellow, 38 orange, 40 red, 44 magenta, 45-47 violet, 52 purple, 57 blue.
+The equivalent `-nearest_color_entry` palette [oslo8near](data/gdaldem-slope-oslo8near.clr) would be centered on: 28 white, 30 yellow, 38 orange, 40 red, 44 magenta, 45-47 violet, 52 purple, 57 blue.
 
 # "hslo"
 
 I started from the oslo9 palette and tried to improve on it.
 
-My idea was to make it continuous, and isolate a new 55-60° category, as in [cslo.clr](geo/data/gdaldem-slope-cslo.clr).
+My idea was to make it continuous, and isolate a new 55-60° category, as in [cslo.clr](data/gdaldem-slope-cslo.clr).
 
 <img src="img/geo/oslo8-colormap-palette.png" width="400"><br>
-<img src="geo/data/colormap-cslo.png" width="400">
+<img src="data/colormap-cslo.png" width="400">
 
 *(The palette plots are made with [colorbar.py](geo/src/colorbar.py))*
 
@@ -74,9 +74,9 @@ slope  |    R    G    B |      H      S      L
 
 So what if we, instead, tried to compute a gradient directly in HSLuv space? Luckily all the hard work has been done for us in [Better Color Gradients with HSLuv](https://j.holmes.codes/20150808-better-color-gradients-with-hsluv/).
 
-<img src="geo/data/colormap-hslo1.png" width="400"><br>
-<img src="geo/data/colormap-hslo2.png" width="400"><br>
-<img src="geo/data/colormap-cslo.png" width="400">
+<img src="data/colormap-hslo1.png" width="400"><br>
+<img src="data/colormap-hslo2.png" width="400"><br>
+<img src="data/colormap-cslo.png" width="400">
 
 Code for the malinvern comparison samples:
 
@@ -84,7 +84,7 @@ Code for the malinvern comparison samples:
 cd TIL/img/geo/palette_compare/
 extent='7.163085 44.182203 7.207031 44.213709'
 gdalwarp -te_srs WGS84 -te $=extent ../alps/slopes-Lausanne-Jouques-Sanremo-Zermatt.tif slopes-malinvern.tif
-gdaldem color-relief slopes-malinvern.tif ../../../geo/data/gdaldem-slope-hslo2.clr malinvern_s_hslo2.webp
+gdaldem color-relief slopes-malinvern.tif ../../../data/gdaldem-slope-hslo2.clr malinvern_s_hslo2.webp
 ```
 
 <img src="img/geo/palette_compare/malinvern_s_hslo.png" width="200">
@@ -109,11 +109,11 @@ We want to:
 * __separate the 55-60° category__, adding grey (RGB 77  77  77) for >60°
 * make magenta more distinct from red
 * __cutoff points__ at .5°, to go well with an integer slope input (less temporary disk space ;)).
-* at some point I considered having an even lower slope with `15-19°  17 |  230  255  255 |    192    98 | #e6ffff  light cyan / bubbles`. But this was invisible and not that useful. You can find it as [eslo14.clr]("geo/data/gdaldem-slope-eslo14near.clr)
+* at some point I considered having an even lower slope with `15-19°  17 |  230  255  255 |    192    98 | #e6ffff  light cyan / bubbles`. But this was invisible and not that useful. You can find it as [eslo14.clr]("data/gdaldem-slope-eslo14near.clr)
 
 ... while still respecting the overall luminance ordering.
 
-You can see the result as [eslo13.clr]("geo/data/gdaldem-slope-eslo13near.clr).
+You can see the result as [eslo13.clr]("data/gdaldem-slope-eslo13near.clr).
 
 It has more colors and cut off points
 `19⁵ (24⁵) 28⁵ (31⁵) 34⁵ (37⁵) 40⁵ (43⁵) 46⁵ (49⁵) 53⁵ 59⁵` for
@@ -141,10 +141,10 @@ slope  nearest| R    G    B |      H     L  | HTML     color
 
 Here is the colormap:
 
-<img src="geo/data/colormap-oslo8near.png" width="400"><br>
-<img src="geo/data/colormap-eslo14near.png" width="400"><br>
-<img src="geo/data/colormap-cslo.png" width="400">
-<img src="geo/data/colormap-sorbet.png" width="400">
+<img src="data/colormap-oslo8near.png" width="400"><br>
+<img src="data/colormap-eslo14near.png" width="400"><br>
+<img src="data/colormap-cslo.png" width="400">
+<img src="data/colormap-sorbet.png" width="400">
 
 And let's wrap-up with the corresponding samples:
 
@@ -160,17 +160,6 @@ time gdaldem color-relief \
   -nearest_color_entry -co TILE_FORMAT=png8
 ```
 
-See also the simplified eslo4 palette:
-
-| Slope  | nearest |  R  |  G  |  B  |   H  |   S  |   L  | HTML    |
-| ------ | ------- | --- | --- | --- |  --- |  --- |  --- |  ---    |
-|  0-30° | 24.5    | 255 | 255 | 255 |  0   |  0   |100   | #FFFFFF |
-| 30-40° | 34.5    | 248 | 212 |  85 | 68.2 | 84.6 | 85.9 | #F8D455 |
-| 40-50° | 44.5    | 231 | 85  | 248 |301.5 | 93.5 | 61.9 | #E755F8 |
-| 50-90° | 54.5    | 136 | 136 | 136 |  0   |  0   | 56   |
-
-https://htmlcolorcodes.com/fr/rgb-a-hex/?r=231&g=85&b=248
-
 # eslo: overview
 
 The idea is to have a less disturbing but similar palette for overviews (lower zoom-levels).
@@ -180,22 +169,24 @@ My idea was to keep a few of the same colors, and play with transparency. Howeve
 
 > at that time, such an 8-bit PNG formulation is **only used for fully opaque tiles** [...] even if PNG8 format would potentially allow color table with transparency.
 
-but actually, since we use blend-multiply, we don't need true transparency, because given an overlay color "R G B" the following are equivalent:
+... so, with transparency, file size will grow uselessly. But actually, since we use blend-multiply, we don't need true transparency, because given an overlay color "R G B" the following are equivalent:
 * add X% transparency then blend
 * average R, G, B with white ie 255 (weighted-average by 100-X%), then blend
 
-
-eg for 60% transparency:
+I applied this formula for an equivalent 60% transparency to the "golden poppy", "magenta 2" and grey from above:
 ```
 34.5     245 191   0 170
 44.5     220   0 245 170
 54.5      77  77  77 170
 ```
-becomes
-```
-34.5     248 212 85
-44.5     231 85 248
-54.5     136 136 136
-```
+Which gives the colors below. This is the basis for [eslo4near](data/gdaldem-slope-eslo4near.clr), that I use at zoom levels 13 and 14.
+<img src="data/colormap-eslo4near.png" width="400">
 
-This is the basis for eslo4near, that I use at zoom levels 13 and 14.
+| Slope  | nearest |  R  |  G  |  B  |   H  |   S  |   L  | HTML    |
+| ------ | ------- | --- | --- | --- |  --- |  --- |  --- |  ---    |
+|  0-30° | 24.5    | 255 | 255 | 255 |  0   |  0   |100   | #FFFFFF |
+| 30-40° | 34.5    | 248 | 212 |  85 | 68.2 | 84.6 | 85.9 | #F8D455 |
+| 40-50° | 44.5    | 231 | 85  | 248 |301.5 | 93.5 | 61.9 | #E755F8 |
+| 50-90° | 54.5    | 136 | 136 | 136 |  0   |  0   | 56   |
+
+_Note: [htmlcolorcodes](https://htmlcolorcodes.com/fr/rgb-a-hex/?r=231&g=85&b=248) was of some help to build this table.
