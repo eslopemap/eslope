@@ -50,21 +50,27 @@ The area covered currently is *a part of* the western alps, in GPS terms from lo
 
 ### Data sources:
 
-*W/C/E stands for Western / Central /Western Alps*
+*W/C/E stands for Western / Central /Western Alps. Links lead to the corresponding notebook*
 
-| Dataset      | W | C | E | Res | Projection        | Official Dataset | DTM.tif (*GB*) | Doc / WebGIS |
-| --           | - | - | - |--  |  --                | --               | --             | --           |
-| FR:IGN       | ✓ | - | - |5/40m| `2154` Lambert93  | [RGE ALTI 5m][1]                                   | [ignalps_dtm.tif] *4*   | [geoservices.ign.fr][1] / [geoportail.gouv.fr][2] |
-| IT:Piemont   | ✓ | ✓ | - |  5m | `32632` WGS84/32N | [RIPRESA AEREA ICE 2009-2011 - DTM 5][3]           | <!--TODO-->             | [geoportale.piemonte.it][3] |
-| IT:Aoste     | ✓ | ✓ | - |  2m | `23032` ED50/32N  | [DTM 2005 / 2008 aggregato][5]                     | <!--TODO-->             | [geoportale.regione.vda.it][5] |
-| CH:SwissTopo | - | ✓ | - |  2m | `2056` LV95/LN02  | [swissALTI3D][7]                                   | [chc_dtm.tif] *18*      | [swisstopo.admin.ch][7] / [map.geo.admin.ch][8] |
-| IT:Lombardia | - | ✓ | - |  5m | `32632` WGS84/32N | [DTM 5X5 - Modello digitale del terreno 2015][15]  | [lombardia_dtm.tif] *1* | [geoportale.regione.lombardia.it][15] |
-| IT:Trentino  | - | ✓ | ✓ |1/2m | `25832` ETRS89/32N | [LiDAR PAT 2014 integrato con voli 2018][9]       | [trento_dtm.tif] *18*   | [territorio.provincia.tn.it][9] / [siat.provincia.tn.it][10] |
-| IT:Sud-Tyrol | - | ✓ | ✓ |2.5m | `25832` ETRS89/32N | [Digitales Geländemodell Südtirols (DGM 2,5m)][11]| [styrol_dtm.tif] *2*    | / [geokatalog.buergernetz.bz.it][11] |
-| DE:Bavaria   | - | - | ✓ | 50m | `25832` ETRS89/32N | [Digitales Geländemodell 50 m Gitterweite][12]    |  [bavaria_dtm.tif] *0.2* | |
-| AT:Tyrol     | - | ✓ | ✓ |  5m |`31254` MGI/AustriaW| [Digitales Geländemodell Tirol, 5m][13]           | [tyrol_dtm.tif] *1* | [tirol.gv.at][13] / [tiris.maps.arcgis.com][14]
-| AT:Salzburg  | - | - | ✓ |  5m ||||
-| AT:Vorarlberg| - | - | ✓ |  5m |`31254` MGI/AustriaW| | | [data.vorarlberg.gv.at][15] / [vogis.cnv.at][16] |
+| Dataset      | Notebook | W | C | E | Res | Projection         | Official Dataset | DTM.tif (*GB*) | Doc / WebGIS |
+| --           | --       | - | - | - |--  |  --                 | --               | --             | --           |
+| FR:IGN       | [nb][21] | ✓ | - | - |5/40m| `2154` Lambert93   | [RGE ALTI 5m][1]                                   | [ignalps_dtm.tif] *4*   | [geoservices.ign.fr][1] / [geoportail.gouv.fr][2] |
+| IT:Piemont   |          | ✓ | ✓ | - |  5m | `32632` WGS84/32N  | [RIPRESA AEREA ICE 2009-2011 - DTM 5][3]           | <!--TODO-->             | [geoportale.piemonte.it][3] |
+| IT:Aoste     |          | ✓ | ✓ | - |  2m | `23032` ED50/32N   | [DTM 2005 / 2008 aggregato][5]                     | <!--TODO-->             | [geoportale.regione.vda.it][5] |
+| CH:SwissTopo | [nb][24] | - | ✓ | - |  2m | `2056` LV95/LN02   | [swissALTI3D][7]                                   | [chc_dtm.tif] *18*      | [swisstopo.admin.ch][7] / [map.geo.admin.ch][8] |
+| IT:Lombardia | [nb][20] | - | ✓ | - |  5m | `32632` WGS84/32N  | [DTM 5X5 - Modello digitale del terreno 2015][15]  | [lombardia_dtm.tif] *1* | [geoportale.regione.lombardia.it][15] |
+| IT:Trentino  | [nb][26] | - | ✓ | ✓ |1/2m | `25832` ETRS89/32N | [LiDAR PAT 2014 integrato con voli 2018][9]       | [trento_dtm.tif] *18*   | [territorio.provincia.tn.it][9] / [siat.provincia.tn.it][10] |
+| IT:Sud-Tyrol | [nb][27] | - | ✓ | ✓ |2.5m | `25832` ETRS89/32N | [Digitales Geländemodell Südtirols (DGM 2,5m)][11]| [styrol_dtm.tif] *2*    | / [geokatalog.buergernetz.bz.it][11] |
+| DE:Bavaria   | [nb][20] | - | - | ✓ | 50m | `25832` ETRS89/32N | [Digitales Geländemodell 50 m Gitterweite][12]    |  [bavaria_dtm.tif] *0.2* | |
+| AT:Tyrol     | [nb][20] | - | ✓ | ✓ |  5m |`31254` MGI/AustriaW| [Digitales Geländemodell Tirol, 5m][13]           | [tyrol_dtm.tif] *1* | [tirol.gv.at][13] / [tiris.maps.arcgis.com][14]
+| AT:Salzburg  |          | - | - | ✓ |  5m ||||
+| AT:Vorarlberg| [nb][20] | - | - | ✓ |  5m |`31254` MGI/AustriaW| | | [data.vorarlberg.gv.at][15] / [vogis.cnv.at][16] |
+
+[21]:https://nbviewer.org/github/eslopemap/eslope/blob/main/development/Western-Alps-dwn-ign.ipynb
+[24]:https://nbviewer.org/github/eslopemap/eslope/blob/main/development/Central-Alps-dwn-ch.ipynb
+[26]:https://nbviewer.org/github/eslopemap/eslope/blob/main/development/Central-Alps-dwn-Trentino.ipynb
+[27]:https://nbviewer.org/github/eslopemap/eslope/blob/main/development/Central-Alps-dwn-SudTyrol.ipynb
+[20]:https://nbviewer.org/github/eslopemap/eslope/blob/main/development/Central-Alps-dwn-others.ipynb
 
 [1]: https://geoservices.ign.fr/documentation/diffusion/telechargement-donnees-libres.html#rge-alti-5m
 [2]: https://www.geoportail.gouv.fr/carte/
