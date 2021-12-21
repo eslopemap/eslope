@@ -1,10 +1,13 @@
 Here you'll find:
 
-* Background on some decisions eg [Design-slope-color-palette.md]
+* Background on some decisions:
+  + [Design-slope-color-palette.md]
+  + [sample_tests.ipynb]: compression and parallelisation
 
 
 * Notebooks to reconstruct individual DTMs: `*-dwn-*.ipynb`
   (refer to the table in the main [README](../README.md))
+  + [Western-Alps-dwn-ign.ipynb]
   + [Central-Alps-dwn-ch.ipynb]
   + [Central-Alps-dwn-SudTyrol.ipynb]
   + [Central-Alps-dwn-Trentino.ipynb]
@@ -26,6 +29,8 @@ _Note: Notebook links use the great nbviewer.org_
 
 <!-- Links: -->
 [Design-slope-color-palette.md]:Design-slope-color-palette.md
+[sample_tests.ipynb]:sample-tests/sample_tests.ipynb
+[Western-Alps-dwn-ign.ipynb]:https://nbviewer.org/github/eslopemap/eslope/blob/main/development/Western-Alps-dwn-ign.ipynb
 [Central-Alps-dwn-ch.ipynb]:https://nbviewer.org/github/eslopemap/eslope/blob/main/development/Central-Alps-dwn-ch.ipynb
 [Central-Alps-dwn-SudTyrol.ipynb]:https://nbviewer.org/github/eslopemap/eslope/blob/main/development/Central-Alps-dwn-SudTyrol.ipynb
 [Central-Alps-dwn-Trentino.ipynb]:https://nbviewer.org/github/eslopemap/eslope/blob/main/development/Central-Alps-dwn-Trentino.ipynb
