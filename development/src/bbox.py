@@ -7,15 +7,23 @@ from unittest import TestCase
 import mercantile as T
 
 
+llclapier   = T.LngLat(7.42 , 44.115)
+llmalinvern = T.LngLat(7.189, 44.199)
+
+llorcieres  = T.LngLat(6.327, 44.683)
+llstgeoire  = T.LngLat(5.59,  45.45) # SwissTopo z11 SW corner, north of Grenoble
+lltignes    = T.LngLat(6.9,   45.47) # same, on z11 S line
+llaixbains  = T.LngLat(5.9,   45.7) # SwissTopo z10,12 SW corner
+
 # Mont Blanc Area
 llmidi      = T.LngLat(6.887, 45.88)
-llemosson   = T.LngLat(6.9377, 46.0672)
-llferret    = T.LngLat(7.0685, 45.8983)
-llmontets   = T.LngLat(6.93, 46)
-llmiage     = T.LngLat(6.81, 45.825)
+llemosson   = T.LngLat(6.938, 46.067)
+llferret    = T.LngLat(7.068, 45.898)
+llmontets   = T.LngLat(6.93,  46)
+llmiage     = T.LngLat(6.81,  45.825)
 llmagland   = T.LngLat(6.624, 46.02)
-llflainel   = T.LngLat(6.67, 46)
-llflaine    = T.LngLat(6.69, 46)
+llflainel   = T.LngLat(6.67,  46)
+llflaine    = T.LngLat(6.69,  46)
 # ll   = T.LngLat()
 # ll   = T.LngLat()
 
@@ -76,6 +84,14 @@ class BBox:
         return BBox(w=ul1.lng, s=ul3.lat, e=ul3.lng, n=ul1.lat)
 
 
+
+bbalps_z6 = BBox(0.000000, 40.979897, 16.874996, 48.922497)
+# Beziers - Vienna
+bbalps_z7 = BBox(2.812499, 43.068887, 16.874996, 48.922497)
+# Camargues - Mariazell
+bbalps_z8 = BBox(4.218749, 43.068887, 15.468747, 47.989920)
+#  - Kapfenberg
+bbalps_z9 = BBox(4.921878, 43.580393, 15.468747, 47.517202)
 # BBox used for the slope maps
 bbwalps = BBox(5.625, 43.581, 7.734, 46.558)
 # bbsalps = BBox(7.734, 45.583, 11.250, 47.517) # "Small" central europe
