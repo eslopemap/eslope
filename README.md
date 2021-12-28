@@ -9,7 +9,6 @@ E.Slope around Mont Malinvern. <br/>
 Note the lower precision of the french side (bottom-left)
 </figcaption>
 
-
 # Status
 Downloads are available. Tile hosting is available, but stability is not guaranteed.
 
@@ -20,8 +19,8 @@ For a discussion of the design process behind this palette, and a comparison, se
 # How to use the maps online?
 
 * Online
-  * Head to [WTracks](https://opoto.github.io/wtracks/) and in the layer control (top-right), tick *EU: E.Slopes* (pending [wtracks#21](https://github.com/opoto/wtracks/pull/21))
-  * Or configure your tool of choice with the correct URL. The Leaflet URL is `http://www.montagne.top/tile/eslo14_walps/{z}/{x}/{y}.png`
+  * Head to [WTracks](https://opoto.github.io/wtracks/?overlays=EU%20eSlope%20Western-Alps). This link auto-activates the right overlay, called *EU eSlope Western-Alps*.
+  * Or configure your tool of choice with the correct URL. The Leaflet URL is `https://www.montagne.top/tile/AlpsWC_eslo/{z}/{x}/{y}.png`
 
 # How to use the maps offline?
 
@@ -29,7 +28,7 @@ For a discussion of the design process behind this palette, and a comparison, se
   * For Android, options include **[AlpineQuest](https://alpinequest.net/)** *(~10€ on [play store](https://play.google.com/store/apps/details?id=psyberia.alpinequest.full))*  ; **OruxMaps** *(free [online](https://www.oruxmaps.com/cs/en/more/downloads) ; 4€ on [play store](https://play.google.com/store/apps/details?id=com.orux.oruxmapsDonate&hl=en&gl=US))* ; [Locus](https://www.locusmap.app/) ; and more.
   * For iphone, [MBTiles GPS](https://apps.apple.com/us/app/mbtiles-gps/id592703465) (untested)
   * On the PC, I haven't found simple viewers that support layers. [QGIS](https://qgis.org/) is way too complex for this task. [GPXSee](http://gpxsee.org/) is an excellent viewer, but single-layer. Maybe [ape@map](https://lic.apemap.at/cms/index.php?page=productdownload) (German, untested)
-* Download the latest mbtiles file, currently [oslos-Lausanne-Jouques-Sanremo-Zermatt.mbtiles](https://drive.google.com/file/d/1c8HcLZ1Cc-I0w53eDh6hN1K31yHVWvb9/view?usp=sharing)
+* Download the latest mbtiles files, found in [this drive folder](https://drive.google.com/drive/folders/15ipzB-OvOdQqOAEdYe7HpZMJKZ8GJiiX?usp=sharing). Currently it's a single file AlpsWC.mbtiles weighing 7 GB, sorry.
 * Configure the app to use it:
   * For AlpineQuest, [import as file-based map](https://alpinequest.net/en/help/v2/maps/file-based-select), use "Add as Layer". [Then set opacity](https://alpinequest.net/en/help/v2/maps/change-opacity#how_to_modify_the_opacity_of_a_map_or_layer) to ~50% and *Layer Blending Mode* (💧icon) to "Multiply".
   * For OruxMap, place it in the correct folder, something like /sdcard/oruxmaps/mapfiles and follow [manual](https://www.oruxmaps.com/cs/en/manual)
@@ -37,7 +36,7 @@ For a discussion of the design process behind this palette, and a comparison, se
 # How to web-host the tiles
 
 Check the upcoming dedicated [Hosting.md](Hosting.md).
-I use go-pmtiles, but many alternatives exist including [MapTiler tileserver](https://github.com/maptiler/tileserver-gl).
+I use go-pmtiles, but many alternatives exist including a go [mbtileserver](https://github.com/consbio/mbtileserver), and [MapTiler tileserver](https://github.com/maptiler/tileserver-gl).
 
 # Coverage & Data
 
