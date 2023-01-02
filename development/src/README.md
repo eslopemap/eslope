@@ -12,3 +12,12 @@ These are ad-hoc micro-libraries used by eslope and soon [etopo]:
 [mbt_util.py]:mbt_util.py
 [bbox.py]:bbox.py
 [colorbar.py]:colorbar.py
+
+# Notable other MBTiles projects:
+
+- Raster
+   * [landez](https://github.com/makinacorpus/landez)
+   * [rio-mbtiles](https://github.com/mapbox/rio-mbtiles)
+   * [tms2geotiff](https://github.com/gumblex/tms2geotiff/blob/master/tms2geotiff.py)
+- Vector:
+   * [supertiler](https://github.com/ChrisLoer/supertiler)

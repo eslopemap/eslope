@@ -76,7 +76,8 @@ def mbt_merge(source, *more_sources:str, dest:str, name='', description='', log=
         (!) Assumes same image format
     """
     assert dest.endswith('.mbtiles')
-    if not os.path.exists(dest):
+    new_mbt = not os.path.exists(dest)
+    if new_mbt:
         log(f'cp {source} {dest}')
         shutil.copyfile(source, os.path.expanduser(dest))
         log('<<>>', source[:-8], ':', mbt_info(source))
@@ -86,6 +87,7 @@ def mbt_merge(source, *more_sources:str, dest:str, name='', description='', log=
     dbc = db.cursor()
     try:
         # Ensure no duplicates in base file
+        log(f'Deduplicating {dest}....')
         dbc.executescript('''
             DELETE FROM tiles WHERE rowid NOT IN
                 (SELECT MAX(rowid) FROM tiles GROUP BY zoom_level, tile_column, tile_row);
@@ -116,9 +118,10 @@ def mbt_merge(source, *more_sources:str, dest:str, name='', description='', log=
             dbc.execute(f'DETACH source;')
             log('>>', dest[:-8], ':', mbt_info(dbc))
 
-        print(name, desc)
-        dbc.execute(f"UPDATE metadata SET value = '{name}' WHERE name = 'name'")
-        dbc.execute(f"UPDATE metadata SET value = '{description or desc}' WHERE name = 'description'")
+        if new_mbt:
+            print('Created:', name, desc)
+            dbc.execute(f"UPDATE metadata SET value = '{name}' WHERE name = 'name'")
+            dbc.execute(f"UPDATE metadata SET value = '{description or desc}' WHERE name = 'description'")
     finally:
         dbc.close()
         db.commit()
@@ -244,6 +247,12 @@ def lnglat2tile(dbc:'sqlite3.Cursor|str', z, *, lng, lat):
     return num2tile(dbc, z, x, y, flip_y=True)
 
 
+def lnglat2tms(z, *, lng, lat):
+    x, y, z = T.tile(lng, lat, z)
+    y = (1 << z) - y - 1
+    return z, x, y
+
+
 def get_all_tiles(sqlite_or_path: DB, q='', arraysize=1000): # <- ~30MB RAM
     with cursor(sqlite_or_path) as dbc:
         dbc.execute('SELECT zoom_level, tile_column, tile_row, tile_data FROM tiles ' + q)
@@ -252,7 +261,7 @@ def get_all_tiles(sqlite_or_path: DB, q='', arraysize=1000): # <- ~30MB RAM
                 yield row
 
 
-def get_all_coords (sqlite_or_path: DB, q='', arraysize=1000): # <- ~30MB RAM
+def get_all_coords(sqlite_or_path: DB, q='', arraysize=1000): # <- ~30MB RAM
     with cursor(sqlite_or_path) as dbc:
         dbc.execute('SELECT zoom_level, tile_column, tile_row FROM tiles ' + q)
         while rows:= dbc.fetchmany(arraysize):
@@ -262,6 +271,48 @@ def get_all_coords (sqlite_or_path: DB, q='', arraysize=1000): # <- ~30MB RAM
 
 def tile_count(dbc: sqlite3.Cursor):
     return int(dbc.execute('SELECT COUNT(*) FROM tiles').fetchone()[0])
+
+
+
+def cut_to_lnglat(mbt_path_in: str, mbt_path_out: str, bb: T.LngLatBbox, zmin=None, zmax=None):
+    """Cut MBTiles to given box
+    TODO use bbox.snap_to_xyz instead of duplicating functionality"""
+    create_mbt(mbt_path_out)
+    with cursor(mbt_path_in) as dbc:
+        #   cursor(mbt_path_out) as dbcout):
+        dbc.execute(f'ATTACH "{mbt_path_out}" AS out;')
+        nprev = 0
+
+        if not zmin or not zmax:
+            (zmindb, zmaxdb), = dbc.execute('SELECT min(zoom_level), max(zoom_level) FROM main.tiles')
+            zmin = zmin or zmindb
+            zmax = zmax or zmaxdb
+            print(zmin, zmax, zmaxdb)
+        for z in range(zmin, zmax+1):
+            (c1west, r1south, c2east, r2north), =\
+                dbc.execute(f'''SELECT
+                    min(tile_column), min(tile_row),
+                    max(tile_column), max(tile_row)
+                FROM main.tiles WHERE zoom_level = {z}''')
+            _, xwest, ysouth = lnglat2tms(z, lng=bb.west, lat=bb.south)
+            _, xeast, ynorth = lnglat2tms(z, lng=bb.east, lat=bb.north)
+            xwest = max(xwest, c1west)
+            ysouth = max(ysouth, r1south)
+            xeast = min(xeast, c2east)
+            ynorth = min(ynorth, r2north)
+            print(z, xwest, '<>', xeast, ysouth, '<>', ynorth)
+            q = f'''
+                INSERT INTO out.tiles (zoom_level, tile_column, tile_row, tile_data)
+                SELECT zoom_level, tile_column, tile_row, tile_data
+                FROM main.tiles
+                WHERE zoom_level = {z}
+                  AND tile_column >= {xwest} AND tile_column <= {xeast}
+                  AND tile_row >= {ysouth} AND tile_row <= {ynorth}
+                '''
+            dbc.execute(q)
+            n, = dbc.execute('SELECT COUNT(*) FROM out.tiles')
+            print('z', z, ':', n[0] - nprev)
+            nprev = n[0]
 
 
 class Tileset:
