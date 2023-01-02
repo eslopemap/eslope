@@ -15,6 +15,8 @@ llstgeoire  = T.LngLat(5.59,  45.45) # SwissTopo z11 SW corner, north of Grenobl
 lltignes    = T.LngLat(6.9,   45.47) # same, on z11 S line
 llaixbains  = T.LngLat(5.9,   45.7) # SwissTopo z10,12 SW corner
 
+llaostesud  = T.LngLat(7.328, 45.71)
+
 # Mont Blanc Area
 llmidi      = T.LngLat(6.887, 45.88)
 llemosson   = T.LngLat(6.938, 46.067)
@@ -51,8 +53,8 @@ class BBox:
 
     def astuple(self):
         return cast(Tuple[float, float, float, float], astuple(self))
-    def __str__(self) -> str:
-        return f'{self.w} {self.s} {self.e} {self.n}'
+    def __str__(self, p=6) -> str:
+        return f'{self.w:.{p}f} {self.s:.{p}f} {self.e:.{p}f} {self.n:.{p}f}'
 
     def enlarge(self, eps=0.001):
         return BBox(self.w - eps, self.s - eps, self.e + eps, self.n + eps)
@@ -71,18 +73,31 @@ class BBox:
         return BBox(max(rect1.w, rect2.w), max(rect1.s, rect2.s),\
                     min(rect1.e, rect2.e), min(rect1.n, rect2.n))
 
-    def snap_to_xyz(self: 'BBox', z:int):
+    def snap_to_xyz(self: 'BBox', z:int, mode='~'):
         """A bit like `mercantile.bounding_tile` but with custom z"""
+        assert mode in ('~', '+', '-')
         import mercantile as T
         w, s, e, n = self.w, self.s,  self.e, self.n
-        t1 = T.tile(w, n, z)  # NW origin (== OSM web... ; != TMS MBTiles)
-        t2 = T.tile(e, s, z)
-        t3 = T.Tile(t2.x+1, t2.y+1, z) # >T<ile
-        ul1 = T.ul(t1)
-        ul3 = T.ul(t3)
-        # print(t1,t2,t3,ul1,ul3)
-        return BBox(w=ul1.lng, s=ul3.lat, e=ul3.lng, n=ul1.lat)
+        tnw_big = T.tile(w, n, z)  # NW origin (== OSM web... ; != TMS MBTiles)
+        tse_sml = T.tile(e, s, z)
+        nw_sml = T.ul(T.Tile(tnw_big.x+1, tnw_big.y+1, z)) # >T<ile
+        nw_big = T.ul(tnw_big)
+        se_sml = T.ul(tse_sml)
+        se_big = T.ul(T.Tile(tse_sml.x+1, tse_sml.y+1, z)) # >T<ile
+        if mode == '+':  # biggest (enlarge)
+            return BBox(w=nw_big.lng, s=se_big.lat, e=se_big.lng, n=nw_big.lat)
+        elif mode == '-': # smallest (crop)
+            return BBox(w=nw_sml.lng, s=se_sml.lat, e=se_sml.lng, n=nw_sml.lat)
+        elif mode == '~':  # closest
+            return BBox(
+                w=closest_to(w, nw_sml.lng, nw_big.lng),
+                s=closest_to(s, se_sml.lat, se_big.lat),
+                e=closest_to(e, se_sml.lng, se_big.lng),
+                n=closest_to(n, nw_sml.lat, nw_big.lat))
 
+
+def closest_to(n, n1, n2):
+    return n1 if abs(n1-n) < abs(n2-n) else n2
 
 
 bbalps_z6 = BBox(0.000000, 40.979897, 16.874996, 48.922497)
@@ -92,7 +107,8 @@ bbalps_z7 = BBox(2.812499, 43.068887, 16.874996, 48.922497)
 bbalps_z8 = BBox(4.218749, 43.068887, 15.468747, 47.989920)
 #  - Kapfenberg
 bbalps_z9 = BBox(4.921878, 43.580393, 15.468747, 47.517202)
-# BBox used for the slope maps
+
+# == BBox used for the slope maps ==
 bbwalps = BBox(5.625, 43.581, 7.734, 46.558)
 # bbsalps = BBox(7.734, 45.583, 11.250, 47.517) # "Small" central europe
 bbcalps = BBox(7.734, 45.583, 11.953, 47.517)
@@ -104,6 +120,7 @@ bbealps_p = BBox(11.953127, 46.073229, 14.062497, 47.754101)
 
 bbmontblancz10 = BBox(6.855466, 45.828796, 7.207031, 45.951147)
 
+# == BBox used for the topo maps ==
 # Kompass south-west: Como-Starlex ✓
 bbkcomo = BBox(9.140628, 45.829, 10.371093, 46.679594)
 # Kompass Dolomites, split to align with bccalps<>bbealps (11.953) ✓
@@ -115,6 +132,7 @@ bbksalzbourg = BBox(12.480469, 46.558861, 14.238281, 47.754093)
 
 bbkeast = BBox(11.953125, 46.073231, 12.832, 47.754093)
 
+# == Tests ==
 foo = BBox(7.7, 46.5, 7.8, 46.6)
 
 class BBoxTest(TestCase):
