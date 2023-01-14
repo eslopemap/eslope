@@ -42,7 +42,7 @@ llresia = T.LngLat(10.50, 46.83)
 
 @dataclass
 class BBox:
-    """The field order maps gdal's `-te_srs WGS84 -te 7.38 44 7.44 44.15`"""
+    """The field order maps mercantile and gdal's W:S:E:N, `-te_srs WGS84 -te 7.38 44 7.44 44.15`"""
     w: float
     s: float
     e: float

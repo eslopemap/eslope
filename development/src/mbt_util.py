@@ -3,7 +3,7 @@ from decimal import Decimal
 import os
 import shutil
 import sqlite3
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Iterable, SupportsRound as Numeric
 from unittest import TestCase
 
 try:
@@ -14,7 +14,6 @@ except ImportError:
 
 
 DB = Union[str, bytes, os.PathLike, sqlite3.Connection, sqlite3.Cursor]  # : 'TypeAlias'
-
 
 @contextlib.contextmanager
 def cursor(sqlite_or_path: DB):
@@ -49,22 +48,79 @@ def cursor(sqlite_or_path: DB):
 #             dbc.connection.close()
 
 
-def get_bounds(sqlite_or_path, dbn:str='main') -> 'tuple[Decimal, ...]': # -> w, s, e, n
+def get_bounds(sqlite_or_path, dbn:str='main') -> T.LngLatBbox:
     with cursor(sqlite_or_path) as dbc:
         bstr, = dbc.execute(f"SELECT value FROM {dbn}.metadata WHERE name = 'bounds'").fetchone()
         return parse_bounds(bstr)
 
-def parse_bounds(bstr):
-    return tuple(map(Decimal, bstr.split(',')))
+def parse_bounds(bstr) -> T.LngLatBbox:
+    return T.LngLatBbox(*map(Decimal, bstr.split(',')))
 
-def set_bounds(sqlite_or_path: DB, w, s, e, n, db:str='main'):
+def get_bbounds(sqlite_or_path, dbn:str='main') -> T.LngLatBbox:
+    return T.LngLatBbox(*get_bounds(sqlite_or_path, dbn))
+
+
+def tms2bbox(z, *, x, y) -> T.LngLatBbox:
+    # Mercantile uses TXYZ but MBTiles use TMS -> flip
+    y = (1 << z) - y - 1
+    bb = T.xy_bounds(x, y, z)
+    sw = T.lnglat(bb.left, bb.bottom)
+    ne = T.lnglat(bb.right, bb.top)
+    return T.LngLatBbox(west=sw.lng, south=sw.lat, east=ne.lng, north=ne.lat)
+
+
+def real_bounds(sqlite_or_path: DB, db:str='main', zlevels:tuple=()) -> T.LngLatBbox:
+    bounds = None
     with cursor(sqlite_or_path) as dbc:
-        return dbc.execute(f"UPDATE {db}.metadata SET value = '{w:.5f},{s:.5f},{e:.5f},{n:.5f}' "
-                            "WHERE name = 'bounds'").fetchone()
+        it = dbc.execute(f"""SELECT zoom_level, MIN(tile_column) x1w, MAX(tile_column) x2e,
+                                                MIN(tile_row) y1s, MAX(tile_row) y2n
+                             FROM {db}.tiles GROUP BY zoom_level""")
+        for z, x1w, x2e, y1s, y2n in it:
+            if not zlevels or z in zlevels:
+                bbsw = tms2bbox(z, x=x1w, y=y1s)
+                bbne = tms2bbox(z, x=x2e, y=y2n)
+                zbounds = T.LngLatBbox(bbsw.west, bbsw.south, bbne.east, bbne.north)
+                bounds = T.LngLatBbox(*b_union(zbounds, bounds)) if bounds else zbounds
+    return bounds
 
 
-def merge_bounds(w1, s1, e1, n1, w2, s2, e2, n2):
-    return min(w1, w2), min(s1, s2), max(e1, e2), max(n1, n2)
+def set_real_bounds(sqlite_or_path: DB, db:str='main'):
+    with cursor(sqlite_or_path) as dbc:
+        bb = real_bounds(dbc, db)
+        print('the bounds:', bb)
+        # boundstr = f'{bb.west:.5f},{bb.south:.5f},{bb.east:.5f},{bb.north:.5f}'
+        update_mbt_meta(dbc, bounds=bb, center=compute_center(dbc, bb, db))
+        # set_bounds(dbc, bounds)
+
+
+def compute_center(sqlite_or_path: DB, bounds:T.LngLatBbox=None, db:str='main'):
+    # center = None
+    with cursor(sqlite_or_path) as dbc:
+        bb = bounds or real_bounds(dbc)
+        (zc, _), = dbc.execute('SELECT min(zoom_level), max(zoom_level) FROM main.tiles')
+        # first, try geographical bbox center
+        lngc = (bb.west + bb.east) / 2
+        latc = (bb.south + bb.north) / 2
+        lnglat2tms(zc, lng=lngc, lat=latc)
+        has_tile, = dbc.execute(
+            f"SELECT COUNT(*) FROM {db}.tiles WHERE zoom_level=? AND tile_column=? AND tile_row=?",
+            (zc, lngc, latc)).fetchone()
+        # Fallback to first tile
+        if not has_tile:
+            for z, x, y in get_all_coords(dbc, q=f'WHERE zoom_level = {zc} LIMIT 1', arraysize=1):
+                bb = tms2bbox(z, x=x, y=y)
+                print("Falling back to first tile ", z, x, y, bb)
+                lngc = (bb.west + bb.east) / 2
+                latc = (bb.south + bb.north) / 2
+        return lngc, latc, zc
+
+
+# FIXME this does not support bbox spanning (-)180°
+def b_union(a, b):  # any kind of Bbox like W:S:E:N
+    aleft, abottom, aright, atop = a
+    bleft, bbottom, bright, btop = b
+    return min(aleft, bleft), min(abottom, bbottom), max(aright, bright), max(atop, btop)
+
 
 def mbt_merge(source, *more_sources:str, dest:str, name='', description='', log=print):
     """ Does a "real" merge, relying on [Upsert](https://www.sqlite.org/lang_UPSERT.html),
@@ -74,6 +130,7 @@ def mbt_merge(source, *more_sources:str, dest:str, name='', description='', log=
           * we deduplicate, keep *last*
           * we create the index as needed
         (!) Assumes same image format
+        (!) Later sources will take precedence on, overwrite and be "on top of" earlier ones
     """
     assert dest.endswith('.mbtiles')
     new_mbt = not os.path.exists(dest)
@@ -97,6 +154,7 @@ def mbt_merge(source, *more_sources:str, dest:str, name='', description='', log=
         name = name or dest[:-8]
         desc = f"Merge of the following files:\n* {meta['name']} : {meta['description']}\n"
         bounds = parse_bounds(meta['bounds'])
+        has_bounds = True
 
         for source in more_sources:
             log('<<', source[:-8], ':', mbt_info(source))
@@ -110,18 +168,25 @@ def mbt_merge(source, *more_sources:str, dest:str, name='', description='', log=
             ''')
             # >> Merge description and bounds
             smeta = dict(dbc.execute('SELECT * FROM source.metadata').fetchall())
-            desc += f"* {smeta['name']} : {smeta['description']}\n"
-            sbounds = parse_bounds(smeta['bounds'])
-            bounds = merge_bounds(*bounds, *sbounds)
-            set_bounds(dbc, *bounds)
+            if 'name' in smeta:
+                desc += f"* {smeta['name']} : {smeta.get('description','')}\n"
+            if 'bounds' in smeta:
+                sbounds = parse_bounds(smeta['bounds'])
+                bounds = b_union(bounds, sbounds)
+                update_mbt_meta(dbc, bounds=bounds, center=compute_center(dbc, bounds))
+            else:
+                has_bounds = False
+
             # >> Detach to make room for next source
             dbc.execute(f'DETACH source;')
             log('>>', dest[:-8], ':', mbt_info(dbc))
 
+        if not has_bounds:
+            set_real_bounds(dbc)
         if new_mbt:
             print('Created:', name, desc)
-            dbc.execute(f"UPDATE metadata SET value = '{name}' WHERE name = 'name'")
-            dbc.execute(f"UPDATE metadata SET value = '{description or desc}' WHERE name = 'description'")
+            dbc.execute(f"UPDATE metadata SET value = ? WHERE name = 'name'", name)
+            dbc.execute(f"UPDATE metadata SET value = ? WHERE name = 'description'", description or desc)
     finally:
         dbc.close()
         db.commit()
@@ -132,7 +197,7 @@ def mbt_info(mbt_or_cur: DB):
         res = c.execute("SELECT 'zoom =', MIN(zoom_level), MAX(zoom_level), '; n =', COUNT(*) "
                         "FROM tiles ;").fetchall()\
             + c.execute("SELECT ';', name, '=', value FROM metadata "
-                        "WHERE name IN ('format', 'bounds');").fetchall()
+                        "WHERE name IN ('format', 'bounds', 'center');").fetchall()
         return ' '.join(' '.join(map(str, row)) for row in res)
 
 
@@ -142,10 +207,10 @@ class TestMbt(TestCase):
     def test_bounds(self):
         b1 = get_bounds('Bugianen 2005 Cuneese.mbtiles')
         b2 = get_bounds('Bugianen 2005 Cervino.mbtiles')
-        self.assertEqual(b1, tuple(map(Decimal, ('6.768','44.088','7.646','44.590'))))
-        self.assertEqual(b2, tuple(map(Decimal, ('7.295','45.706','7.734','46.012'))))
-        self.assertEqual(merge_bounds(*b1, *b2),
-                    (Decimal('6.768'), Decimal('44.088'), Decimal('7.734'), Decimal('46.012')))
+        self.assertEqual(tuple(b1), tuple(map(Decimal, ('6.768','44.088','7.646','44.590'))))
+        self.assertEqual(tuple(b2), tuple(map(Decimal, ('7.295','45.706','7.734','46.012'))))
+        self.assertEqual(b_union(b1, b2),
+                    T.LngLatBbox(Decimal('6.768'), Decimal('44.088'), Decimal('7.734'), Decimal('46.012')))
 
 
 def create_mbt(dbc: DB, dbn:str='main'):
@@ -176,24 +241,29 @@ def create_mbt_meta(sqlite_or_path: DB, name, desc, bounds:tuple, format, overwr
     update_mbt_meta(sqlite_or_path, name=name, desc=desc, bounds=bounds, format=format, overwrite=overwrite)
 
 
-def update_mbt_meta(sqlite_or_path, name=None, desc=None, bounds:tuple=None, format=None,
-                    minzoom=None, maxzoom=None, overwrite=True):
+def update_mbt_meta(sqlite_or_path, name=None, desc=None, bounds:Iterable[Numeric]=(),
+                    format=None, minzoom=None, maxzoom=None, center:Iterable[Numeric]=(), overwrite=True):
     with cursor(sqlite_or_path) as dbc:
         dbc.execute('CREATE UNIQUE INDEX IF NOT EXISTS meta ON metadata (name)')
         meta = {"type": "baselayer"}
         if bounds:
-            meta['bounds'] = ','.join(map(str, bounds))
+            meta['bounds'] = ','.join(map(lambda f: str(round(f, 5)), bounds))
+        # boundstr = f'{bb.west:.5f},{bb.south:.5f},{bb.east:.5f},{bb.north:.5f}'
+        if center:
+            lng, lat, z = center
+            meta['center'] = f'{lng:.5f},{lat:.5f},{z}'
         args = {'name': name, 'description': desc, 'format': format,
-                'minzoom': minzoom, 'maxzoom': maxzoom}
+                'minzoom': minzoom, 'maxzoom': maxzoom, 'center': center}
         for k, v in args.items():
-            if v is not None:
+            if k not in meta and v is not None:
                 meta[k] = v
         on_conflict = 'DO UPDATE SET value=excluded.value' if overwrite else 'DO NOTHING'
         dbc.executemany(
             f'INSERT INTO metadata (name, value) VALUES (?, ?) ON CONFLICT (name) {on_conflict}',
             meta.items())
     # `format` is mandatory in 1.1+
-    # `bounds` is optional
+    # `bounds` is optional but mandated by pmtiles
+    # `center` is optional but mandated by pmtiles
     # `description` becomes optional later
 
 
@@ -206,7 +276,7 @@ def insert_tiles(dbc, rows: 'List[Tuple[int, int, int, bytes]]', dbname='main'):
             ON CONFLICT (zoom_level, tile_column, tile_row)
             DO UPDATE SET tile_data=excluded.tile_data ''', rows)
 
-def update_tiles(dbc, rows: 'List[Tuple[int, int, int, bytes]]', dbname='main'):
+def update_tiles(dbc, rows: 'List[Tuple[bytes, int, int, int]]', dbname='main'):
     """ rows: list of (z, x, y, im)"""
     # y = (1 << z) - y - 1
     if rows:
@@ -252,6 +322,28 @@ def lnglat2tms(z, *, lng, lat):
     y = (1 << z) - y - 1
     return z, x, y
 
+# def tms2lnglat(z, *, lng, lat):
+#     n = 2 ^ zoom
+#     lon_deg = xtile / n * 360.0 - 180.0
+#     lat_rad = arctan(sinh(π * (1 - 2 * ytile / n)))
+#     lat_deg = lat_rad * 180.0 / π
+
+# import math
+# def lnglat2tms(lng, lat, z):
+#   lat_rad = math.radians(lat)
+#   n = 2.0 ** z
+#   x = ((lng + 180.0) / 360.0 * n)
+#   y = int(n * (1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0)
+#   y = (1 << z) - y - 1
+#   return z, x, y
+
+# def num2deg(xtile, ytile, zoom):
+#   n = 2.0 ** zoom
+#   lon_deg = xtile / n * 360.0 - 180.0
+#   lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
+#   lat_deg = math.degrees(lat_rad)
+#   return (lat_deg, lon_deg)
+
 
 def get_all_tiles(sqlite_or_path: DB, q='', arraysize=1000): # <- ~30MB RAM
     with cursor(sqlite_or_path) as dbc:
@@ -273,14 +365,84 @@ def tile_count(dbc: sqlite3.Cursor):
     return int(dbc.execute('SELECT COUNT(*) FROM tiles').fetchone()[0])
 
 
+def apply_to_tiles(source: str, dest: str, fun, zooms: list[int]=[], dbname='main', log=print):
+    assert dest.endswith('.mbtiles')
+    if dest != source:
+        log(f'cp {source} {dest}')
+        dest = os.path.expanduser(dest)
+        shutil.copyfile(source, dest)
+    log('<<>>', source[:-8], ':', mbt_info(source))
+    n = 0
+    with cursor(dest) as dbc:
+        if not zooms:
+            (zmin, zmax), = dbc.execute('SELECT min(zoom_level), max(zoom_level) FROM main.tiles')
+            zooms = list(range(zmin, zmax+1))
+        for z in zooms:
+            it = get_all_tiles(dbc, q=f'WHERE zoom_level = {z}')
+            # OPTIM could do batches of ~100, insert with executemany
+            for zoom_level, tile_column, tile_row, tile_data in it:
+                n += 1
+                new_data = fun(zoom_level, tile_column, tile_row, tile_data)
+                q = f'''UPDATE {dbname}.tiles SET tile_data = ?
+                        WHERE zoom_level=? AND tile_column=? AND tile_row=?  '''
+                dbc.execute(q, (new_data, zoom_level, tile_column, tile_row))
+    log(f"Changed {n} tiles")
 
-def cut_to_lnglat(mbt_path_in: str, mbt_path_out: str, bb: T.LngLatBbox, zmin=None, zmax=None):
-    """Cut MBTiles to given box
-    TODO use bbox.snap_to_xyz instead of duplicating functionality"""
-    create_mbt(mbt_path_out)
-    with cursor(mbt_path_in) as dbc:
-        #   cursor(mbt_path_out) as dbcout):
-        dbc.execute(f'ATTACH "{mbt_path_out}" AS out;')
+
+def cut_zoom(source: str, dest: str, zooms: list[int]):
+    create_mbt(dest)
+    with cursor(source) as dbc:
+        dbc.execute(f'ATTACH "{dest}" AS dest;')
+        nprev = 0
+        for z in zooms:
+            q = f'''
+                INSERT INTO dest.tiles (zoom_level, tile_column, tile_row, tile_data)
+                SELECT zoom_level, tile_column, tile_row, tile_data
+                FROM main.tiles
+                WHERE zoom_level = {z}
+                '''
+            dbc.execute(q)
+            n, = dbc.execute('SELECT COUNT(*) FROM dest.tiles')
+            print('z', z, ':', n[0] - nprev)
+            nprev = n[0]
+
+
+def discard_bbox_borders(source: str, dest: str, zooms: list[int]=[], dbname='main', log=print):
+    assert dest.endswith('.mbtiles')
+    if dest != source:
+        log(f'cp {source} {dest}')
+        dest = os.path.expanduser(dest)
+        shutil.copyfile(source, dest)
+    log('<<>>', source[:-8], ':', mbt_info(source))
+    with cursor(dest) as dbc:
+        if not zooms:
+            (zmin, zmax), = dbc.execute(f'SELECT min(zoom_level), max(zoom_level) FROM {dbname}.tiles')
+            zooms = list(range(zmin, zmax+1))
+        nprev, = dbc.execute(f'SELECT COUNT(*) FROM {dbname}.tiles')
+        for z in zooms:
+            (x1west, y1south, x2east, y2north), =\
+                dbc.execute(f'''SELECT
+                    min(tile_column), min(tile_row),
+                    max(tile_column), max(tile_row)
+                FROM {dbname}.tiles WHERE zoom_level = {z}''')
+            q = f'''
+                DELETE FROM {dbname}.tiles
+                WHERE zoom_level = {z}
+                  AND (tile_column == {x1west} OR tile_column == {x2east}
+                    OR tile_row == {y1south} OR tile_row == {y2north})
+                '''
+            dbc.execute(q)
+            n, = dbc.execute(f'SELECT COUNT(*) FROM {dbname}.tiles')
+            print('z', z, ': removed', nprev[0] - n[0])
+            nprev = n
+
+
+def cut_to_lnglat(source: str, dest: str, bb: T.LngLatBbox, zmin=None, zmax=None):
+    """Cut MBTiles to given box, *including* tiles containing the border
+    TODO use bbox.snap_to_xyz instead of duplicating functionality?"""
+    create_mbt(dest)
+    with cursor(source) as dbc:
+        dbc.execute(f'ATTACH "{dest}" AS dest;')
         nprev = 0
 
         if not zmin or not zmax:
@@ -289,20 +451,22 @@ def cut_to_lnglat(mbt_path_in: str, mbt_path_out: str, bb: T.LngLatBbox, zmin=No
             zmax = zmax or zmaxdb
             print(zmin, zmax, zmaxdb)
         for z in range(zmin, zmax+1):
-            (c1west, r1south, c2east, r2north), =\
+            (x1west, y1south, x2east, y2north), =\
                 dbc.execute(f'''SELECT
                     min(tile_column), min(tile_row),
                     max(tile_column), max(tile_row)
                 FROM main.tiles WHERE zoom_level = {z}''')
             _, xwest, ysouth = lnglat2tms(z, lng=bb.west, lat=bb.south)
             _, xeast, ynorth = lnglat2tms(z, lng=bb.east, lat=bb.north)
-            xwest = max(xwest, c1west)
-            ysouth = max(ysouth, r1south)
-            xeast = min(xeast, c2east)
-            ynorth = min(ynorth, r2north)
+            xwest = max(xwest, x1west)
+            ysouth = max(ysouth, y1south)
+            xeast = min(xeast, x2east)
+            ynorth = min(ynorth, y2north)
             print(z, xwest, '<>', xeast, ysouth, '<>', ynorth)
+            if xwest > xeast or ysouth > ynorth:
+                print(f"Warning: no overlap at zoom-level {z}, output may be unusable")
             q = f'''
-                INSERT INTO out.tiles (zoom_level, tile_column, tile_row, tile_data)
+                INSERT INTO dest.tiles (zoom_level, tile_column, tile_row, tile_data)
                 SELECT zoom_level, tile_column, tile_row, tile_data
                 FROM main.tiles
                 WHERE zoom_level = {z}
@@ -310,10 +474,41 @@ def cut_to_lnglat(mbt_path_in: str, mbt_path_out: str, bb: T.LngLatBbox, zmin=No
                   AND tile_row >= {ysouth} AND tile_row <= {ynorth}
                 '''
             dbc.execute(q)
-            n, = dbc.execute('SELECT COUNT(*) FROM out.tiles')
+            n, = dbc.execute('SELECT COUNT(*) FROM dest.tiles')
             print('z', z, ':', n[0] - nprev)
             nprev = n[0]
+        set_real_bounds(dbc)
 
+
+def remove_lnglat(source: str, dest: str, bb: T.LngLatBbox, zmin=None, zmax=None, log=print):
+    """Create `dest` as a copy of `source` with the tiles inside given bbox, border included removed
+    """
+    assert dest.endswith('.mbtiles')
+    assert not os.path.exists(dest), "not overwriting existing file"
+    log(f'cp {source} {dest}')
+    dest = os.path.expanduser(dest)
+    shutil.copyfile(source, dest)
+    log('<<>>', source[:-8], ':', mbt_info(source))
+    with cursor(dest) as dbc:
+        nprev, = dbc.execute('SELECT COUNT(*) FROM dest.tiles')
+        if not zmin or not zmax:
+            (zmindb, zmaxdb), = dbc.execute('SELECT min(zoom_level), max(zoom_level) FROM main.tiles')
+            zmin = zmin or zmindb
+            zmax = zmax or zmaxdb
+            print(zmin, zmax, zmaxdb)
+        for z in range(zmin, zmax+1):
+            _, xwest, ysouth = lnglat2tms(z, lng=bb.west, lat=bb.south)
+            _, xeast, ynorth = lnglat2tms(z, lng=bb.east, lat=bb.north)
+            q = f'''
+                DELETE FROM main.tiles
+                WHERE zoom_level = {z}
+                  AND tile_column >= {xwest} AND tile_column <= {xeast}
+                  AND tile_row >= {ysouth} AND tile_row <= {ynorth}
+                '''
+            dbc.execute(q)
+            n, = dbc.execute('SELECT COUNT(*) FROM dest.tiles')
+            print('z', z, ': removed', nprev - n[0])
+            nprev = n[0]
 
 class Tileset:
     @classmethod
