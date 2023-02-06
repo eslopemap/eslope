@@ -47,6 +47,14 @@ class BBox:
     s: float
     e: float
     n: float
+
+    @classmethod
+    def from_llbb(cls, bb: T.LngLatBbox):
+        return cls(bb.west, bb.south, bb.east, bb.north)
+    def to_llbb(self):
+        return T.LngLatBbox(self.w, self.s, self.e, self.n)
+
+
     def __post_init__(self):
         if self.e > 40:
             print('WARN: East>40', file=sys.stderr)
@@ -55,6 +63,8 @@ class BBox:
         return cast(Tuple[float, float, float, float], astuple(self))
     def __str__(self, p=6) -> str:
         return f'{self.w:.{p}f} {self.s:.{p}f} {self.e:.{p}f} {self.n:.{p}f}'
+    def __iter__(self):
+        return iter((self.w, self.s, self.e, self.n))
 
     def enlarge(self, eps=0.001):
         return BBox(self.w - eps, self.s - eps, self.e + eps, self.n + eps)
@@ -75,7 +85,7 @@ class BBox:
 
     def snap_to_xyz(self: 'BBox', z:int, mode='~'):
         """A bit like `mercantile.bounding_tile` but with custom z"""
-        assert mode in ('~', '+', '-')
+        assert mode in ('~', '+', '-')  # closest / enlarge / crop
         import mercantile as T
         w, s, e, n = self.w, self.s,  self.e, self.n
         tnw_big = T.tile(w, n, z)  # NW origin (== OSM web... ; != TMS MBTiles)
@@ -94,7 +104,14 @@ class BBox:
                 s=closest_to(s, se_sml.lat, se_big.lat),
                 e=closest_to(e, se_sml.lng, se_big.lng),
                 n=closest_to(n, nw_sml.lat, nw_big.lat))
+        raise NotImplementedError
 
+
+def enlarge(bb: T.LngLatBbox, eps=0.001):
+    return BBox.from_llbb(bb).enlarge(eps=eps).to_llbb()
+
+def snap_to_xyz(bb: T.LngLatBbox, z:int, mode='~'):
+    return BBox.from_llbb(bb).snap_to_xyz(z=z, mode=mode).to_llbb()
 
 def closest_to(n, n1, n2):
     return n1 if abs(n1-n) < abs(n2-n) else n2
