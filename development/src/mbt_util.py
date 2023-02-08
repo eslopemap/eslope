@@ -535,16 +535,20 @@ def tile_count(dbc: sqlite3.Cursor, dbn='main', q=''):
     return int(dbc.execute(f'SELECT COUNT(*) FROM {dbn}.tiles {q}').fetchone()[0])
 
 
-def validate_src_dst(source, dest, overwrite=False):
+def validate_src_dst(source, dest, overwrite=False, fun_inplace=False):
     """Common path handling:
        * if no overwrite, try to make a backup before raise.
-       * handle source==dest by moving source"""
+       * handle source==dest by moving source
+       * fun_inplace: True for functions which can operate with source==dest
+    """
     dest = dest or source
     assert dest.endswith('.mbtiles') or dest.endswith('.mbt')
     if os.path.exists(dest):
         if overwrite and source != dest:
             os.unlink(dest)
             print('Overwriting ', dest)
+        elif overwrite and fun_inplace:
+            return source, dest  # leave as is
         else:
             bak = f'{dest[:-8]}.bak.mbtiles'
             assert not os.path.exists(bak), "not overwriting existing file " + bak
@@ -613,8 +617,9 @@ def cut_to_lnglat(source: str, bb: LLBb, dest: str='', zmin=None, zmax=None,
                   dbn='main', overwrite=False, log=print):
     """Cut MBTiles to given box, *including* tiles containing the border
     TODO use bbox.snap_to_xyz instead of duplicating functionality?"""
-    source, dest = validate_src_dst(source, dest, overwrite)
-    print('cut_to_lnglat', source, '->', dest)
+    source, dest = validate_src_dst(source, dest, overwrite, fun_inplace=False)
+    log(mbt_info(source))
+    log('cut_to_lnglat', source, '->', dest)
     create_mbt(dest)
     epsilon = 0.1**5 # around 1 pixel at z16
     with cursor(source) as dbc:
@@ -669,10 +674,11 @@ def remove_lnglat(source: str, dest: str='', bb: LLBb=None, zmin=None, zmax=None
        If only zmin/zmax are given, the whole zlevel(s) are removed.
     """
     assert bb or zmin or zmax
-    source, dest = validate_src_dst(source, dest, overwrite)
-    log(f'cp {source} {dest}')
-    dest = os.path.expanduser(dest)
-    shutil.copyfile(source, dest)
+    source, dest = validate_src_dst(source, dest, overwrite, fun_inplace=True)
+    if source != dest:
+        log(f'cp {source} {dest}')
+        dest = os.path.expanduser(dest)
+        shutil.copyfile(source, dest)
     log('<<>>', source[:-8], ':', mbt_info(source))
     epsilon = 0.1**5 # around 1 pixel at z16
     with cursor(dest) as dbc:

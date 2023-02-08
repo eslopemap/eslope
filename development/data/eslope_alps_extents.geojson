@@ -1,0 +1,185 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              5.625,
+              46.55886
+            ],
+            [
+              5.625,
+              43.960789999999996
+            ],
+            [
+              7.73437,
+              43.960789999999996
+            ],
+            [
+              7.73437,
+              46.55886
+            ],
+            [
+              5.625,
+              46.55886
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "esloAlpsW1",
+        "stroke": "#ff00ff",
+        "stroke-width": 5,
+        "fill-opacity": 0.1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              7.73437,
+              47.5172
+            ],
+            [
+              7.73437,
+              45.58329
+            ],
+            [
+              9.14062,
+              45.58329
+            ],
+            [
+              9.14062,
+              47.5172
+            ],
+            [
+              7.73437,
+              47.5172
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "esloAlpsC8",
+        "stroke": "#ff00ff",
+        "stroke-width": 5,
+        "fill-opacity": 0.1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              9.14062,
+              47.5172
+            ],
+            [
+              9.14062,
+              45.58329
+            ],
+            [
+              10.54688,
+              45.58329
+            ],
+            [
+              10.54688,
+              47.5172
+            ],
+            [
+              9.14062,
+              47.5172
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "esloAlpsC9",
+        "stroke": "#ff00ff",
+        "stroke-width": 5,
+        "fill-opacity": 0.1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              10.54688,
+              47.5172
+            ],
+            [
+              10.54688,
+              45.58329
+            ],
+            [
+              11.95313,
+              45.58329
+            ],
+            [
+              11.95313,
+              47.5172
+            ],
+            [
+              10.54688,
+              47.5172
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "esloAlpsE12",
+        "stroke": "#ff00ff",
+        "stroke-width": 5,
+        "fill-opacity": 0.1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              7.73437,
+              47.5172
+            ],
+            [
+              7.73437,
+              45.58329
+            ],
+            [
+              11.95313,
+              45.58329
+            ],
+            [
+              11.95313,
+              47.5172
+            ],
+            [
+              7.73437,
+              47.5172
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "",
+        "stroke": "#ff00ff",
+        "stroke-width": 5,
+        "fill-opacity": 0.1
+      }
+    }
+  ]
+}
