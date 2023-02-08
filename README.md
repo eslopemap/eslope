@@ -12,6 +12,12 @@ Note the lower precision of the french side (bottom-left)
 # Status
 Downloads are available. Tile hosting is available, but stability is not guaranteed.
 
+For elevation data, see below. For slope data in mbtiles format, this is currrently split into 4 files available in the **[releases](../../releases)** folder.
+They cover the following area:
+
+<img src="development/img/geo/eslope_alps_extents.jpg" width="1000"
+     style="display: block; margin-left: auto; margin-right: auto;"/>
+
 # Palette used
 <img src="img/colormap-eslo14.png" width="600"/><br/>
 For a discussion of the design process behind this palette, and a comparison, see [geo-slope-color-palette](https://github.com/eddy-geek/TIL/blob/master/202105-geo-slope-color-palette.md).
