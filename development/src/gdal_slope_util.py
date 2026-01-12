@@ -2,12 +2,12 @@ import os
 from pathlib import Path
 from posixpath import realpath
 import re
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError
 from time import time
 
 try:
     # like os.system but with live output
-    from IPython.utils.process import system
+    from IPython.utils.process import system  #type:ignore
     def check_run(cmd):  # type:ignore
         r = system(cmd)
         if r: raise CalledProcessError(r, cmd)
@@ -27,7 +27,9 @@ resolutions = [
     2.388657133911758, 1.194328566955879, 0.5971642834779395, 0.2985821417389697,
     0.1492910708694849, 0.0746455354347424, 0.0373227677173712]
 
-CMAPDIR = '~/code/eddy-geek/TIL/geo/data'
+
+CMAPDIR_OLD = '~/code/eddy-geek/TIL/geo/data'
+CMAPDIR = os.path.realpath(os.path.realpath(__file__) + '/../../data')
 
 # ZSTD_LEVEL=3 bring an additional 15-20% at +60% processing cost, compared to L=1
 ZSTD_OPT='-co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=3 '
@@ -42,7 +44,7 @@ def isfile(path):
 
 
 def gdalwarp(src:str, dest:str, z=16, precision='', mode='nearest',
-        extent='', default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
+        extent:'BBox|str'='', default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
     """ Gdalwarp wrapper
         :param z: to reproject/resample to a TMS zoom level `z`
         :param extent: eg `-te w s e n` in WGS84
@@ -65,7 +67,7 @@ def gdalwarp(src:str, dest:str, z=16, precision='', mode='nearest',
 
 def merge_slopes(*,
         src: str, dest: str, z=16, precision='-ot Byte',
-        extent='', default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
+        extent:'BBox|str'='', default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
     """Merge/reproject/resample to a TMS zoom level `z`
        Also rounds to Byte by default"""
     mode='nearest' if z == 16 else 'q3'
@@ -103,13 +105,13 @@ def cut_extent(*, src, dest='', z=16, precision='-ot Byte',
              extent=extent, default_opt=default_opt, extra_opt=extra_opt, reuse=reuse)
 
 
-def make_ovr(*, src, dest='', z,
-             default_opt=DFLT_WARP_OPT, extra_opt='', reuse=False):
+def make_ovr(*, src: str, dest='', z,
+             default_opt=DFLT_WARP_OPT, extra_opt='', r='q3', reuse=False):
     tr = resolutions[z]
     dest = dest or re.sub(r'(z\d\d?\b)|(\.[^.]+)$', rf'z{z}\2', src, count=1)
     if reuse and isfile(dest): print('Reuse', dest) ; return 0
     cmd = f'''\
-      gdalwarp -r q3 -tr {tr} -{tr} \\
+      gdalwarp -r {r} -tr {tr} -{tr} \\
         {default_opt} {extra_opt} \\
         {src} {dest}'''
     print(cmd)
@@ -127,16 +129,19 @@ def slope_mbt(cname:str, *, z:int, options='', src='', dest='', reuse=False):
     dest = dest or f'./{cname}-z{z}.mbtiles'
     if reuse and isfile(dest): print('Reuse', dest) ; return dest
     cmap = f'gdaldem-slope-{cname}.clr'
+    # set nodata value to white so mbtiles blends correctly
+    cmd = rf'''sed 's/nv \+0 \+0 \+0/nv  255 255 255/g' '{CMAPDIR}/{cmap}' '''
+    print(cmd)
+    with open(f'/tmp/{cmap}', 'wb') as f:
+        f.write(check_output(cmd, shell=True))
     cmd = rf'''\
-      sed 's/nv \+0 \+0 \+0/nv  255 255 255/g' \
-          {CMAPDIR}/{cmap} >! /tmp/{cmap} && \
       gdaldem color-relief {src} /tmp/{cmap} {dest} \
           -nearest_color_entry -co TILE_FORMAT=png8 {options}'''
     print(cmd)
     check_run(cmd)
     return dest
 
-def make_overviews(src, reuse=False):
+def make_overviews(src: str, reuse=False):
     """Create an mbtile with lower zoom levels, from a z16 mbtiles
         Makes overviews with Q3 method as necessary, but prefer making your own.
     """
@@ -161,20 +166,22 @@ def make_overviews(src, reuse=False):
     for i, (z, cname) in enumerate(zooms.items()):
         chkpoint = time()
         zoomed_slope = src if z==16 else make_ovr(src=src, z=z, reuse=reuse)
-        to_merge = slope_mbt(cname, z=z, src=zoomed_slope, reuse=reuse)
-        files.append(os.path.expanduser(to_merge))  # f'{cname}-z{z}.mbtiles')
+        if zoomed_slope:
+            to_merge = slope_mbt(cname, z=z, src=zoomed_slope, reuse=reuse)
+            files.append(os.path.expanduser(to_merge))  # f'{cname}-z{z}.mbtiles')
         print(f'Step {i+1}/{len(zooms)} completed in {round(time()-chkpoint,1)} seconds')
 
     mbt_merge(*files, dest=final_mbt)
 
 
-def eslo_tiny(path: str, cname='eslo13near', res=0, where='/tmp'):
+def eslo_tiny(path: str, cname='eslo13bnear', res=0, where='/tmp'):
     """For quick overviews. If file is big, use eg res=200. Detects `slope` in file name"""
     is_slope = 'slope' in os.path.basename(path)  # already a slope
     if res:
         p_tiny = where + '/tiny.tif'
-        cmd = f'gdalwarp -overwrite -tr {res} -{res} {path} {p_tiny}'
-        print(cmd); check_run(cmd)
+        if not os.path.exists(p_tiny):
+            cmd = f'gdalwarp -overwrite -tr {res} -{res} {path} {p_tiny}'
+            print(cmd); check_run(cmd)
         path = p_tiny
     p_slope = where + '/tiny_slope.tif'
     if is_slope:
@@ -188,10 +195,11 @@ def eslo_tiny(path: str, cname='eslo13near', res=0, where='/tmp'):
     print(cmd); check_run(cmd)
     return p_relief
 
-def relief_tiny(path: str, res=0, where='/tmp'):
+def relief_tiny(*paths: str, res=0, where='/tmp'):
     """For quick overviews. If file is big, use eg res=200. Detects `slope` in file name"""
+    path = ' '.join(map(str, paths))
     assert not 'slope' in os.path.basename(path)
-    cmap = CMAPDIR + '/gdaldem-relief9.clr'
+    cmap = CMAPDIR_OLD + '/gdaldem-relief9.clr'
     if res:
         p_tiny = where + '/tiny.tif'
         cmd = f'gdalwarp -overwrite {WARP_PARAL_OPT} -tr {res} -{res} {path} {p_tiny}'
