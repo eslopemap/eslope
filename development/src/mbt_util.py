@@ -16,7 +16,7 @@ except ImportError:
 LLBb = T.LngLatBbox
 
 
-DB = Union[str, bytes, os.PathLike, sqlite3.Connection, sqlite3.Cursor]  # : 'TypeAlias'
+DB = Union[str, os.PathLike, sqlite3.Connection, sqlite3.Cursor]  # : 'TypeAlias'
 
 @contextlib.contextmanager
 def cursor(sqlite_or_path: DB, create=False):

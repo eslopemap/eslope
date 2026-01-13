@@ -174,12 +174,12 @@ def make_overviews(src: str, reuse=False):
     mbt_merge(*files, dest=final_mbt)
 
 
-def eslo_tiny(path: str, cname='eslo13bnear', res=0, where='/tmp'):
+def eslo_tiny(path: str, cname='eslo13bnear', res=0, where='/tmp', reuse=False):
     """For quick overviews. If file is big, use eg res=200. Detects `slope` in file name"""
     is_slope = 'slope' in os.path.basename(path)  # already a slope
     if res:
         p_tiny = where + '/tiny.tif'
-        if not os.path.exists(p_tiny):
+        if not reuse or not os.path.exists(p_tiny):
             cmd = f'gdalwarp -overwrite -tr {res} -{res} {path} {p_tiny}'
             print(cmd); check_run(cmd)
         path = p_tiny
