@@ -105,7 +105,7 @@ def set_real_bounds(sqlite_or_path: DB, dbn:str='main', log=lambda *a: None):
     with cursor(sqlite_or_path) as dbc:
         zmin, zmax, bb = real_bounds(dbc, dbn=dbn)
         c = compute_center(dbc, bb, dbn)
-        update_mbt_meta(dbc, bounds=bb, center=c, zmin=zmin, zmax=zmax, log=log)
+        update_mbt_meta(dbc, bounds=bb, center=c, zmin=zmin, zmax=zmax, log=log, dbn=dbn)
 
 
 def compute_center(sqlite_or_path: DB, bounds:LLBb=None, dbn:str='main'):
@@ -402,9 +402,9 @@ def create_mbt_meta(sqlite_or_path: DB, name, desc, bounds:tuple, format, overwr
 def update_mbt_meta(sqlite_or_path, name=None, desc=None, attrib=None,
                     bounds:Iterable[Numeric]=(), center:Iterable=(),
                     format=None, zmin=None, zmax=None,
-                    _type='baselayer', db='main', overwrite=True, log=lambda *a: None):
+                    _type='baselayer', dbn='main', overwrite=True, log=lambda *a: None):
     with cursor(sqlite_or_path) as dbc:
-        dbc.execute(f'CREATE UNIQUE INDEX IF NOT EXISTS {db}.meta ON metadata (name)')
+        dbc.execute(f'CREATE UNIQUE INDEX IF NOT EXISTS {dbn}.meta ON metadata (name)')
         meta = {}
         if bounds:
             meta['bounds'] = ','.join(map(lambda f: str(round(f, 5)), bounds))
@@ -420,7 +420,7 @@ def update_mbt_meta(sqlite_or_path, name=None, desc=None, attrib=None,
         on_conflict = 'DO UPDATE SET value=excluded.value' if overwrite else 'DO NOTHING'
         log('Meta update', pformat(meta))
         dbc.executemany(
-            f'INSERT INTO {db}.metadata (name, value) VALUES (?, ?) ON CONFLICT (name) {on_conflict}',
+            f'INSERT INTO {dbn}.metadata (name, value) VALUES (?, ?) ON CONFLICT (name) {on_conflict}',
             meta.items())
     # `format` is mandatory in 1.1+
     # `bounds` is optional but mandated by pmtiles

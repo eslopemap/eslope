@@ -39,6 +39,11 @@ WARP_PARAL_OPT='-multi -wo NUM_THREADS=ALL_CPUS ' # <- || compression, warp and 
 DFLT_OPT = ZSTD_OPT + TILE_OPT + XTIFF_OPT
 DFLT_WARP_OPT = ZSTD_OPT + TILE_OPT + XTIFF_OPT + WARP_PARAL_OPT + '-overwrite '
 
+def printed(foo):
+    print(foo)
+    return foo
+
+
 def isfile(path):
     return os.path.isfile(os.path.expanduser(os.path.expandvars(path)))
 
@@ -55,14 +60,12 @@ def gdalwarp(src:str, dest:str, z=16, precision='', mode='nearest',
          f'-tr {resolutions[z]} -{resolutions[z]}'
     if isinstance(extent, BBox):
         extent = f'-te {extent}'
-    cmd = f'''\
+    check_run(printed(f'''\
       gdalwarp {precision} \\
         {default_opt} \\
         -t_srs EPSG:3857 {tr} -r {mode} \\
         -te_srs WGS84 {extent} {extra_opt} \\
-        {src} {dest}'''
-    print(cmd)
-    check_run(cmd)
+        {src} {dest}'''))
 
 
 def merge_slopes(*,
@@ -108,14 +111,13 @@ def cut_extent(*, src, dest='', z=16, precision='-ot Byte',
 def make_ovr(*, src: str, dest='', z,
              default_opt=DFLT_WARP_OPT, extra_opt='', r='q3', reuse=False):
     tr = resolutions[z]
+    # replace the first occurrence of 'z#' or the last file extension with 'z#'
     dest = dest or re.sub(r'(z\d\d?\b)|(\.[^.]+)$', rf'z{z}\2', src, count=1)
-    if reuse and isfile(dest): print('Reuse', dest) ; return 0
-    cmd = f'''\
+    if reuse and isfile(dest): print('Reuse', dest); return 0
+    check_run(printed(f'''\
       gdalwarp -r {r} -tr {tr} -{tr} \\
         {default_opt} {extra_opt} \\
-        {src} {dest}'''
-    print(cmd)
-    check_run(cmd)
+        {src} {dest}'''))
     return dest
 
 
@@ -125,24 +127,26 @@ def slope_mbt(cname:str, *, z:int, options='', src='', dest='', reuse=False):
         :input zlevel: eg `16`
         :input options: gdaldem options eg `-alpha`
     """
-    src = src or f'./slopes-z{z}.tif'
-    dest = dest or f'./{cname}-z{z}.mbtiles'
+    if src:
+        # keep folder, insert cname and z in file name
+        src_foldr, src_name = os.path.split(src)
+        dest = f'{src_foldr}/{src_name.replace(".tif", "")}-{cname}-z{z}.mbtiles'
+    else:
+        src = src or f'./slopes-z{z}.tif'
+        dest = dest or f'./{cname}-z{z}.mbtiles'
     if reuse and isfile(dest): print('Reuse', dest) ; return dest
     cmap = f'gdaldem-slope-{cname}.clr'
     # set nodata value to white so mbtiles blends correctly
     cmd = rf'''sed 's/nv \+0 \+0 \+0/nv  255 255 255/g' '{CMAPDIR}/{cmap}' '''
-    print(cmd)
     with open(f'/tmp/{cmap}', 'wb') as f:
-        f.write(check_output(cmd, shell=True))
-    cmd = rf'''\
+        f.write(check_output(printed(cmd), shell=True))
+    check_run(printed(rf'''\
       gdaldem color-relief {src} /tmp/{cmap} {dest} \
-          -nearest_color_entry -co TILE_FORMAT=png8 {options}'''
-    print(cmd)
-    check_run(cmd)
+          -nearest_color_entry -co TILE_FORMAT=png8 {options}'''))
     return dest
 
-def make_overviews(src: str, reuse=False):
-    """Create an mbtile with lower zoom levels, from a z16 mbtiles
+def make_overviews(src: str, dest='', reuse=False):
+    """Create an mbtile with lower zoom levels, from a z16 slope.
         Makes overviews with Q3 method as necessary, but prefer making your own.
     """
     zooms = {
@@ -152,16 +156,12 @@ def make_overviews(src: str, reuse=False):
         13: 'eslo4near',  # TBD oslo3near
         # 12: 'oslo2near', # TBD
     }
-    src_foldr, src_name = os.path.split(src)
-    destname = re.sub('slopes-?', '', src_name.replace('.tif',''))
-    destname = re.sub('-?z16', '', destname)
-    final_mbt = os.path.join(src_foldr, f'eslo{destname}.mbtiles')
-    if os.path.exists(final_mbt):
+    if os.path.exists(dest):
         if reuse:
-             print('Reuse', final_mbt)
-             return final_mbt
+             print('Reuse', dest)
+             return dest
         else:
-            os.remove(final_mbt)
+            os.remove(dest)
     files=[]
     for i, (z, cname) in enumerate(zooms.items()):
         chkpoint = time()
@@ -171,7 +171,7 @@ def make_overviews(src: str, reuse=False):
             files.append(os.path.expanduser(to_merge))  # f'{cname}-z{z}.mbtiles')
         print(f'Step {i+1}/{len(zooms)} completed in {round(time()-chkpoint,1)} seconds')
 
-    mbt_merge(*files, dest=final_mbt)
+    mbt_merge(*files, dest=dest)
 
 
 def eslo_tiny(path: str, cname='eslo13bnear', res=0, where='/tmp', reuse=False):
@@ -191,8 +191,7 @@ def eslo_tiny(path: str, cname='eslo13bnear', res=0, where='/tmp', reuse=False):
         print(cmd); check_run(cmd)
     cmap = f'{CMAPDIR}/gdaldem-slope-{cname}.clr'
     p_relief = f'{where}/tiny_{cname}.png'
-    cmd = f'gdaldem color-relief {p_slope} {cmap} {p_relief} -nearest_color_entry'
-    print(cmd); check_run(cmd)
+    check_run(printed(f'gdaldem color-relief {p_slope} {cmap} {p_relief} -nearest_color_entry'))
     return p_relief
 
 def relief_tiny(*paths: str, res=0, where='/tmp'):
@@ -202,10 +201,8 @@ def relief_tiny(*paths: str, res=0, where='/tmp'):
     cmap = CMAPDIR_OLD + '/gdaldem-relief9.clr'
     if res:
         p_tiny = where + '/tiny.tif'
-        cmd = f'gdalwarp -overwrite {WARP_PARAL_OPT} -tr {res} -{res} {path} {p_tiny}'
-        print(cmd); check_run(cmd)
+        check_run(printed(f'gdalwarp -overwrite {WARP_PARAL_OPT} -tr {res} -{res} {path} {p_tiny}'))
         path = p_tiny
     p_relief = f'{where}/tiny_relief.png'
-    cmd = f'gdaldem color-relief {path} {cmap} {p_relief}'
-    print(cmd); check_run(cmd)
+    check_run(printed(f'gdaldem color-relief {path} {cmap} {p_relief}'))
     return p_relief

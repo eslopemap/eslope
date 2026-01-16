@@ -127,6 +127,8 @@ bbalps_z9 = BBox(4.921878, 43.580393, 15.468747, 47.517202)
 
 # == BBox used for the slope maps ==
 bbwalps = BBox(5.625, 43.581, 7.734, 46.558)
+bbwvalps = BBox(5.54, 43.581, 7.734, 46.558).snap_to_xyz(z=12)
+
 # bbsalps = BBox(7.734, 45.583, 11.250, 47.517) # "Small" central europe
 bbcalps = BBox(7.734, 45.583, 11.953, 47.517)
 bbealps = BBox(11.953, 46.073, 14.062, 47.754)
