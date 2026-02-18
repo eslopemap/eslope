@@ -72,7 +72,7 @@ slope  |    R    G    B |      H      S      L
 60     |   77   77   77 |    0.0    0.0   32.7
 ```
 
-So what if we, instead, tried to compute a gradient directly in HSLuv space? Luckily all the hard work has been done for us in [Better Color Gradients with HSLuv](https://j.holmes.codes/20150808-better-color-gradients-with-hsluv/).
+So what if we, instead, tried to compute a gradient directly in HSLuv space? Luckily all the hard work has been done for us in [Better Color Gradients with HSLuv](https://j.holmes.codes/20150808-better-color-gradients/).
 
 <img src="data/colormap-hslo1.png" width="400"><br>
 <img src="data/colormap-hslo2.png" width="400"><br>
@@ -143,7 +143,8 @@ Here is the colormap:
 
 <img src="data/colormap-oslo8near.png" width="400"><br>
 <img src="data/colormap-eslo14near.png" width="400"><br>
-<img src="data/colormap-cslo.png" width="400">
+<img src="data/colormap-eslo13bnear.png" width="400"><br>
+<img src="data/colormap-cslo.png" width="400"><br>
 <img src="data/colormap-sorbet.png" width="400">
 
 And let's wrap-up with the corresponding samples:
@@ -173,12 +174,11 @@ My idea was to keep a few of the same colors, and play with transparency. Howeve
 * add X% transparency then blend
 * average R, G, B with white ie 255 (weighted-average by 100-X%), then blend
 
-I applied this formula for an equivalent 60% transparency to the "golden poppy", "magenta 2" and grey from above:
-```
+I applied this formula for an equivalent 60% transparency to the "golden poppy", "magenta 2" and grey from above, again:
 34.5     245 191   0 170
 44.5     220   0 245 170
 54.5      77  77  77 170
-```
+
 Which gives the colors below. This is the basis for [eslo4near](data/gdaldem-slope-eslo4near.clr), that I use at zoom levels 13 and 14.
 <img src="data/colormap-eslo4near.png" width="400">
 
@@ -190,3 +190,129 @@ Which gives the colors below. This is the basis for [eslo4near](data/gdaldem-slo
 | 50-90° | 54.5    | 136 | 136 | 136 |  0   |  0   | 56   |
 
 _Note: [htmlcolorcodes](https://htmlcolorcodes.com/fr/rgb-a-hex/?r=231&g=85&b=248) was of some help to build this table.
+
+# 2024 edits
+
+Previous palette, reverse engineered:
+```
+ 199 255 255 | 192.2 100.0%  96.4%  | #c7ffff | light sky blue
+ 104 255 255 | 192.2 100.0%  92.4%  | #68ffff | bright cyan
+  26 216 223 | 197.6  98.2%  78.8%  | #1ad8df | aqua blue
+ 255 248  26 |  83.2 100.0%  95.4%  | #fff81a | sunny yellow
+ 255 194  66 |  56.5 100.0%  82.0%  | #ffc242 | golden rod
+ 254 128  26 |  29.5  98.4%  67.0%  | #fe801a | pumpkin orange
+ 241  26  33 |  11.8  94.2%  51.3%  | #f11a21 | red
+ 235  84 255 | 300.7 100.0%  62.7%  | #eb54ff | heliotrope
+ 111  53 255 | 271.2 100.0%  43.0%  | #6f35ff | purplish blue
+ 103  49 236 | 271.3  91.0%  39.8%  | #6731ec | purple blue
+  26  26 255 | 265.9 100.0%  34.4%  | #1a1aff | rich blue
+ 111 111 111 |   0.0   0.0%  46.8%  | #6f6f6f | medium grey
+```
+but the code says I used eslo13near, which is:
+```
+17 |  255 255 255 |   0.0   0.0% 100.0%  | #ffffff | white
+22 |  170 255 255 | 192.2 100.0%  94.9%  | #aaffff | light cyan
+27 |   86 245 245 | 192.2  87.7%  88.9%  | #56f5f5 | bright cyan
+30 |  240 225   0 |  79.7 100.0%  88.1%  | #f0e100 | dandelion
+33 |  245 191   0 |  61.1 100.0%  80.0%  | #f5bf00 | golden
+36 |  255 155   0 |  40.3 100.0%  72.7%  | #ff9b00 | tangerine
+39 |  255 105   0 |  23.5 100.0%  62.8%  | #ff6900 | bright orange
+42 |  255   0   0 |  12.2 100.0%  53.2%  | #ff0000 | fire engine red
+45 |  220   0 245 | 299.5 100.0%  53.8%  | #dc00f5 | hot purple
+48 |  167  25 255 | 282.2 100.0%  47.1%  | #a719ff | electric purple
+51 |  110   0 255 | 272.4 100.0%  38.8%  | #6e00ff | purplish blue
+56 |    0   0 255 | 265.9 100.0%  32.3%  | #0000ff | rich blue
+65 |   77  77  77 |   0.0   0.0%  32.7%  | #4d4d4d | charcoal grey
+nv |    0   0   0 |   0.0   0.0%   0.0%  | #000000 | black
+```
+
+```py
+slope  nearest| R    G    B |      H     L  | HTML     color
+ 0-19°  12 |  255  255  255 |      0   100  | #ffffff  white
+20-24°  22 |  170  255  255 |    192    95  | #aaffff  pale turquoise / celeste
+25-28°  27 |   86  245  245 |    192    92  | #56ffff  cyan
+29-31°  30 |  254 254    80 |     90    97  | #fefe50  titanium yellow before 80 88
+32-34°  33 |  245  191    0 |     65    87  | #f5bf00  golden poppy   befor 61 80
+35-37°  36 |  255  155    0 |     45    76  | #ff9b00  orange peel  was 40.3  72.7
+38-40°  39 |  255  105    0 |     24    65  | #ff6900  dark orange 2 was 24    63
+41-43°  42 |  255    0    0 |     12    53  | #ff0000  red
+44-46°  45 |  220    0  245 |    300    60  | #dc00f5  magenta 2  299.5  53.8
+47-49°  48 |  167   25  255 |    280    50  | #a719ff  purple    282    47
+50-53°  51 |  110    0  255 |    270    39  | #6e00ff  electric indigo / violet    272    39
+54-57°  54 |   65    6  255 |    268    35  | #4106ff  blue1
+58-64°  59 |    0    0  255 |    266    32  | #0000ff  blue
+65-90°  68 |   89   89   89 |      0    38  | #595959  gray 30
+
+```
+
+Goals for the new palette
+
+"30" should be made *much* lighter and yellower to be less scary, as avalanches are quite unlikely at this point ; to be make the 33 class standout
+
+29-31°  30 |  240  225    0 |     80    88  | #f0e100  titanium yellow
+
+80/88 → 88/97.5 #fbff86
+
+33 - 36 - 39 should also start a bit lighter to space them out better as this is the most frequent ski terrain.
+
+45 can be lighter as well, as it's already quite distinct from 42, to better differentiate it from 45
+
+22       170 255 255
+27        86 245 245
+30       240 225   0
+33       245 191   0
+36       255 155   0
+39       255 105   0
+42       255   0   0
+45       220   0 245
+48       167  25 255
+51       110   0 255
+56         0   0 255
+65        77  77  77
+nv         0   0   0
+
+# 2026 edits
+
+2024 was 3 blue, 3 orange , red, 4 purple, grey
+
+## eslo13bnear
+
+eslo13b near is the one from 2024, let's see it
+
+```py
+slope  nearest| R    G    B |      H     L  | HTML     color
+ 0-19°  17 |  255  255  255 |      0   100  | #ffffff  white
+20-24°  22 |  192  255  255 | x   192    95  | #aaffff  pale turquoise / celeste
+25-28°  27 |   87  255  255 | x   192    92  | #56ffff  cyan
+29-31°  30 |    0  211  219 |     90    97  | #00D3DB  titanium yellow before 80 88
+32-34°  33 |   255 247    0 |     65    87  | #f5bf00  golden poppy   befor 61 80
+35-37°  36 |  255  155    0 |     45    76  | #ff9b00  orange peel  was 40.3  72.7
+38-40°  39 |  255  105    0 |     24    65  | #ff6900  dark orange 2 was 24    63
+41-43°  42 |  255    0    0 |     12    53  | #ff0000  red
+44-46°  45 |  220    0  245 |    300    60  | #dc00f5  magenta 2  299.5  53.8
+47-49°  48 |  167   25  255 |    280    50  | #a719ff  purple    282    47
+50-53°  51 |  110    0  255 |    270    39  | #6e00ff  electric indigo / violet    272    39
+54-57°  54 |   65    6  255 |    268    35  | #4106ff  blue1
+58-64°  59 |    0    0  255 |    266    32  | #0000ff  blue
+65-90°  68 |   89   89   89 |      0    38  | #595959  gray 30
+```
+33 |       255 247   0
+36 |       255 187  45
+39 |       253 113   0
+42 |       239   0   8
+45 |       232  64 255
+48 |       162  63 255
+51 |        94  30 255
+56 |         0   0 255
+65 |        94  94  94
+nv |         0   0   0
+
+
+## eslo4near adjustment towards steeper slopes
+
+| Slope  | nearest |  R  |  G  |  B  |   H  |   S  |   L  | HTML    |
+| ------ | ------- | --- | --- | --- |  --- |  --- |  --- |  ---    |
+|  0-30° | 24.5    | 255 | 255 | 255 |  0   |  0   |100   | #FFFFFF |
+| 30-43° | 34.5    | 248 | 212 |  85 | 68.2 | 84.6 | 85.9 | #F8D455 |
+| 43-55° | 50.5    | 231 | 85  | 248 |301.5 | 93.5 | 61.9 | #E755F8 |
+| 55-90° | 60.5    | 136 | 136 | 136 |  0   |  0   | 56   |
