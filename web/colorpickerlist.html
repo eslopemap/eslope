@@ -1,0 +1,2782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Picker List</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        button.secondary:hover {
+            background: #545b62;
+        }
+
+        .pickers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .picker-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .picker-container h3 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .picker-wrapper {
+            position: relative;
+            display: flex;
+            gap: 10px;
+        }
+
+        .canvas-container {
+            position: relative;
+        }
+
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: block;
+        }
+
+        canvas.square {
+            cursor: crosshair;
+        }
+
+        canvas.slider {
+            cursor: ns-resize;
+        }
+
+        .marker {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 3px rgba(0,0,0,0.8), inset 0 0 2px rgba(0,0,0,0.3);
+            cursor: grab;
+            z-index: 1;
+        }
+
+        .marker:active {
+            cursor: grabbing;
+        }
+
+        .marker.selected {
+            border-width: 3px;
+            width: 12px;
+            height: 12px;
+            z-index: 10;
+        }
+
+        .slider-marker {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .slider-marker polygon {
+            fill: white;
+            stroke: black;
+            stroke-width: 1;
+        }
+
+        .color-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .color-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            position: sticky;
+            top: 0;
+        }
+
+        .color-table td {
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .color-table input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .color-table input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+        }
+
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+
+        .copy-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            background: #28a745;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        .delete-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            background: #dc3545;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .row-number {
+            text-align: center;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-content textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .modal-content textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+        }
+
+        .file-picker-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .file-picker-row input[type="file"] {
+            display: none;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Color Picker List</h1>
+
+        <div class="controls">
+            <button onclick="addColor()">Add Color</button>
+            <button onclick="importColors()" class="secondary">Import Colors</button>
+            <button onclick="exportColors()" class="secondary">Export Colors</button>
+            <button onclick="clearAll()" class="secondary">Clear All</button>
+        </div>
+
+        <div class="pickers-grid">
+            <div class="picker-container">
+                <h3>HSLuv: Hue/Lightness + Saturation</h3>
+                <div class="picker-wrapper">
+                    <div class="canvas-container">
+                        <canvas id="hsluv_hl_canvas" class="square" width="257" height="257"></canvas>
+                        <div id="hsluv_hl_markers"></div>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="hsluv_s_canvas" class="slider" width="31" height="257"></canvas>
+                        <svg width="31" height="257" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+                            <g id="hsluv_s_slider"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="picker-container">
+                <h3>HSL: Hue/Lightness + Saturation</h3>
+                <div class="picker-wrapper">
+                    <div class="canvas-container">
+                        <canvas id="hsl_hl_canvas" class="square" width="257" height="257"></canvas>
+                        <div id="hsl_hl_markers"></div>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="hsl_s_canvas" class="slider" width="31" height="257"></canvas>
+                        <svg width="31" height="257" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+                            <g id="hsl_s_slider"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="picker-container">
+                <h3>HSLuv: Hue/Saturation + Lightness</h3>
+                <div class="picker-wrapper">
+                    <div class="canvas-container">
+                        <canvas id="hsluv_hs_canvas" class="square" width="257" height="257"></canvas>
+                        <div id="hsluv_hs_markers"></div>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="hsluv_l_canvas" class="slider" width="31" height="257"></canvas>
+                        <svg width="31" height="257" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+                            <g id="hsluv_l_slider"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="picker-container">
+                <h3>OKLrCH: Lightness/Chroma + Hue</h3>
+                <div class="picker-wrapper">
+                    <div class="canvas-container">
+                        <canvas id="oklch_lc_canvas" class="square" width="257" height="257"></canvas>
+                        <div id="oklch_lc_markers"></div>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="oklch_h_canvas" class="slider" width="31" height="257"></canvas>
+                        <svg width="31" height="257" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+                            <g id="oklch_h_slider"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <table class="color-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Swatch</th>
+                    <th>Name</th>
+                    <th>Metadata <button class="copy-btn" onclick="copyColumn('metadata')">Copy</button></th>
+                    <th>RGB <button class="copy-btn" onclick="copyColumn('rgb')">Copy</button></th>
+                    <th>HSL <button class="copy-btn" onclick="copyColumn('hsl')">Copy</button></th>
+                    <th>HSLuv <button class="copy-btn" onclick="copyColumn('hsluv')">Copy</button></th>
+                    <th>OKLrCH <button class="copy-btn" onclick="copyColumn('oklch')">Copy</button></th>
+                    <th>HTML Hex <button class="copy-btn" onclick="copyColumn('hex')">Copy</button></th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="colorList">
+            </tbody>
+        </table>
+    </div>
+
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <h2>Import Colors</h2>
+            <textarea id="importTextarea" placeholder="Paste colors here (one per line)&#10;Supports formats:&#10;  metadata #FFFFFF&#10;  17 #FFFFFF&#10;  255 0 0&#10;  #FF0000"></textarea>
+            <div class="file-picker-row">
+                <button onclick="document.getElementById('fileInput').click()" class="secondary">Choose File</button>
+                <input type="file" id="fileInput" accept=".clr,.txt,.csv" onchange="loadFile(event)">
+                <span id="fileName" style="line-height: 32px; color: #666;"></span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px; margin-bottom: 6px;">
+                <label style="display: flex; gap: 6px; align-items: center;"><input type="checkbox" id="import_clear_existing" checked>Clear existing</label>
+            </div>
+            <div class="modal-buttons">
+                <button onclick="closeImportModal()" class="secondary">Cancel</button>
+                <button onclick="processImport()">Import</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <h2>Export Colors</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                <label style="display: flex; gap: 6px; align-items: center;"><input type="checkbox" id="export_metadata" checked onchange="updateExportPreview()">Metadata</label>
+                <label style="display: flex; gap: 6px; align-items: center;"><input type="checkbox" id="export_rgb" checked onchange="updateExportPreview()">RGB</label>
+                <label style="display: flex; gap: 6px; align-items: center;"><input type="checkbox" id="export_hsl" onchange="updateExportPreview()">HSL</label>
+                <label style="display: flex; gap: 6px; align-items: center;"><input type="checkbox" id="export_hsluv" checked onchange="updateExportPreview()">HSLuv</label>
+                <label style="display: flex; gap: 6px; align-items: center;"><input type="checkbox" id="export_oklch" onchange="updateExportPreview()">OKLrCH</label>
+                <label style="display: flex; gap: 6px; align-items: center;"><input type="checkbox" id="export_hex" checked onchange="updateExportPreview()">HTML Hex</label>
+                <label style="display: flex; gap: 6px; align-items: center;"><input type="checkbox" id="export_name" onchange="updateExportPreview()">Name</label>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                <label for="export_separator" style="min-width: 90px; color: #666; font-weight: 600;">Separator</label>
+                <input id="export_separator" type="text" value="|" style="width: 120px; padding: 6px 8px; border: 1px solid #ced4da; border-radius: 4px; font-family: 'Courier New', monospace;" oninput="updateExportPreview()">
+            </div>
+            <textarea id="exportTextarea" readonly></textarea>
+            <div class="modal-buttons">
+                <button onclick="closeExportModal()" class="secondary">Close</button>
+                <button onclick="copyExport()">Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        class Hsluv {
+            constructor() {
+                // RGB
+                this.hex = '#000000';
+                this.rgb_r = 0;
+                this.rgb_g = 0;
+                this.rgb_b = 0;
+
+                // CIE XYZ
+                this.xyz_x = 0;
+                this.xyz_y = 0;
+                this.xyz_z = 0;
+
+                // CIE LUV
+                this.luv_l = 0;
+                this.luv_u = 0;
+                this.luv_v = 0;
+
+                // CIE LUV LCh
+                this.lch_l = 0;
+                this.lch_c = 0;
+                this.lch_h = 0;
+
+                // HSLuv
+                this.hsluv_h = 0;
+                this.hsluv_s = 0;
+                this.hsluv_l = 0;
+
+                // HPLuv
+                this.hpluv_h = 0;
+                this.hpluv_p = 0;
+                this.hpluv_l = 0;
+
+                // 6 lines in slope-intercept format
+                this.r0s = 0;
+                this.r0i = 0;
+                this.r1s = 0;
+                this.r1i = 0;
+                this.g0s = 0;
+                this.g0i = 0;
+                this.g1s = 0;
+                this.g1i = 0;
+                this.b0s = 0;
+                this.b0i = 0;
+                this.b1s = 0;
+                this.b1i = 0;
+            }
+
+            static fromLinear(c) {
+                if (c <= 0.0031308) {
+                    return 12.92 * c;
+                }
+                return 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+            }
+
+            static toLinear(c) {
+                if (c > 0.04045) {
+                    return Math.pow((c + 0.055) / 1.055, 2.4);
+                }
+                return c / 12.92;
+            }
+
+            static yToL(Y) {
+                if (Y <= Hsluv.epsilon) {
+                    return Y / Hsluv.refY * Hsluv.kappa;
+                }
+                return 116 * Math.pow(Y / Hsluv.refY, 1 / 3) - 16;
+            }
+
+            static lToY(L) {
+                if (L <= 8) {
+                    return Hsluv.refY * L / Hsluv.kappa;
+                }
+                return Hsluv.refY * Math.pow((L + 16) / 116, 3);
+            }
+
+            static distanceFromOriginAngle(slope, intercept, angle) {
+                const d = intercept / (Math.sin(angle) - slope * Math.cos(angle));
+                if (d < 0) {
+                    return Infinity;
+                }
+                return d;
+            }
+
+            static distanceFromOrigin(slope, intercept) {
+                return Math.abs(intercept) / Math.sqrt(Math.pow(slope, 2) + 1);
+            }
+
+            static min6(f1, f2, f3, f4, f5, f6) {
+                return Math.min(f1, Math.min(f2, Math.min(f3, Math.min(f4, Math.min(f5, f6)))));
+            }
+
+            xyzToRgb() {
+                this.rgb_r = Hsluv.fromLinear(Hsluv.m_r0 * this.xyz_x + Hsluv.m_r1 * this.xyz_y + Hsluv.m_r2 * this.xyz_z);
+                this.rgb_g = Hsluv.fromLinear(Hsluv.m_g0 * this.xyz_x + Hsluv.m_g1 * this.xyz_y + Hsluv.m_g2 * this.xyz_z);
+                this.rgb_b = Hsluv.fromLinear(Hsluv.m_b0 * this.xyz_x + Hsluv.m_b1 * this.xyz_y + Hsluv.m_b2 * this.xyz_z);
+            }
+
+            rgbToXyz() {
+                const lr = Hsluv.toLinear(this.rgb_r);
+                const lg = Hsluv.toLinear(this.rgb_g);
+                const lb = Hsluv.toLinear(this.rgb_b);
+                this.xyz_x = 0.41239079926595 * lr + 0.35758433938387 * lg + 0.18048078840183 * lb;
+                this.xyz_y = 0.21263900587151 * lr + 0.71516867876775 * lg + 0.072192315360733 * lb;
+                this.xyz_z = 0.019330818715591 * lr + 0.11919477979462 * lg + 0.95053215224966 * lb;
+            }
+
+            xyzToLuv() {
+                const divider = this.xyz_x + 15 * this.xyz_y + 3 * this.xyz_z;
+                let varU = 4 * this.xyz_x;
+                let varV = 9 * this.xyz_y;
+                if (divider !== 0) {
+                    varU /= divider;
+                    varV /= divider;
+                } else {
+                    varU = NaN;
+                    varV = NaN;
+                }
+                this.luv_l = Hsluv.yToL(this.xyz_y);
+                if (this.luv_l === 0) {
+                    this.luv_u = 0;
+                    this.luv_v = 0;
+                } else {
+                    this.luv_u = 13 * this.luv_l * (varU - Hsluv.refU);
+                    this.luv_v = 13 * this.luv_l * (varV - Hsluv.refV);
+                }
+            }
+
+            luvToXyz() {
+                if (this.luv_l === 0) {
+                    this.xyz_x = 0;
+                    this.xyz_y = 0;
+                    this.xyz_z = 0;
+                    return;
+                }
+                const varU = this.luv_u / (13 * this.luv_l) + Hsluv.refU;
+                const varV = this.luv_v / (13 * this.luv_l) + Hsluv.refV;
+                this.xyz_y = Hsluv.lToY(this.luv_l);
+                this.xyz_x = 0 - 9 * this.xyz_y * varU / ((varU - 4) * varV - varU * varV);
+                this.xyz_z = (9 * this.xyz_y - 15 * varV * this.xyz_y - varV * this.xyz_x) / (3 * varV);
+            }
+
+            luvToLch() {
+                this.lch_l = this.luv_l;
+                this.lch_c = Math.sqrt(this.luv_u * this.luv_u + this.luv_v * this.luv_v);
+                if (this.lch_c < 0.00000001) {
+                    this.lch_h = 0;
+                } else {
+                    const hrad = Math.atan2(this.luv_v, this.luv_u);
+                    this.lch_h = hrad * 180.0 / Math.PI;
+                    if (this.lch_h < 0) {
+                        this.lch_h = 360 + this.lch_h;
+                    }
+                }
+            }
+
+            lchToLuv() {
+                const hrad = this.lch_h / 180.0 * Math.PI;
+                this.luv_l = this.lch_l;
+                this.luv_u = Math.cos(hrad) * this.lch_c;
+                this.luv_v = Math.sin(hrad) * this.lch_c;
+            }
+
+            calculateBoundingLines(l) {
+                const sub1 = Math.pow(l + 16, 3) / 1560896;
+                const sub2 = sub1 > Hsluv.epsilon ? sub1 : l / Hsluv.kappa;
+                const s1r = sub2 * (284517 * Hsluv.m_r0 - 94839 * Hsluv.m_r2);
+                const s2r = sub2 * (838422 * Hsluv.m_r2 + 769860 * Hsluv.m_r1 + 731718 * Hsluv.m_r0);
+                const s3r = sub2 * (632260 * Hsluv.m_r2 - 126452 * Hsluv.m_r1);
+                const s1g = sub2 * (284517 * Hsluv.m_g0 - 94839 * Hsluv.m_g2);
+                const s2g = sub2 * (838422 * Hsluv.m_g2 + 769860 * Hsluv.m_g1 + 731718 * Hsluv.m_g0);
+                const s3g = sub2 * (632260 * Hsluv.m_g2 - 126452 * Hsluv.m_g1);
+                const s1b = sub2 * (284517 * Hsluv.m_b0 - 94839 * Hsluv.m_b2);
+                const s2b = sub2 * (838422 * Hsluv.m_b2 + 769860 * Hsluv.m_b1 + 731718 * Hsluv.m_b0);
+                const s3b = sub2 * (632260 * Hsluv.m_b2 - 126452 * Hsluv.m_b1);
+                this.r0s = s1r / s3r;
+                this.r0i = s2r * l / s3r;
+                this.r1s = s1r / (s3r + 126452);
+                this.r1i = (s2r - 769860) * l / (s3r + 126452);
+                this.g0s = s1g / s3g;
+                this.g0i = s2g * l / s3g;
+                this.g1s = s1g / (s3g + 126452);
+                this.g1i = (s2g - 769860) * l / (s3g + 126452);
+                this.b0s = s1b / s3b;
+                this.b0i = s2b * l / s3b;
+                this.b1s = s1b / (s3b + 126452);
+                this.b1i = (s2b - 769860) * l / (s3b + 126452);
+            }
+
+            calcMaxChromaHpluv() {
+                const r0 = Hsluv.distanceFromOrigin(this.r0s, this.r0i);
+                const r1 = Hsluv.distanceFromOrigin(this.r1s, this.r1i);
+                const g0 = Hsluv.distanceFromOrigin(this.g0s, this.g0i);
+                const g1 = Hsluv.distanceFromOrigin(this.g1s, this.g1i);
+                const b0 = Hsluv.distanceFromOrigin(this.b0s, this.b0i);
+                const b1 = Hsluv.distanceFromOrigin(this.b1s, this.b1i);
+                return Hsluv.min6(r0, r1, g0, g1, b0, b1);
+            }
+
+            calcMaxChromaHsluv(h) {
+                const hueRad = h / 360 * Math.PI * 2;
+                const r0 = Hsluv.distanceFromOriginAngle(this.r0s, this.r0i, hueRad);
+                const r1 = Hsluv.distanceFromOriginAngle(this.r1s, this.r1i, hueRad);
+                const g0 = Hsluv.distanceFromOriginAngle(this.g0s, this.g0i, hueRad);
+                const g1 = Hsluv.distanceFromOriginAngle(this.g1s, this.g1i, hueRad);
+                const b0 = Hsluv.distanceFromOriginAngle(this.b0s, this.b0i, hueRad);
+                const b1 = Hsluv.distanceFromOriginAngle(this.b1s, this.b1i, hueRad);
+                return Hsluv.min6(r0, r1, g0, g1, b0, b1);
+            }
+
+            hsluvToLch() {
+                if (this.hsluv_l > 99.9999999) {
+                    this.lch_l = 100;
+                    this.lch_c = 0;
+                } else if (this.hsluv_l < 0.00000001) {
+                    this.lch_l = 0;
+                    this.lch_c = 0;
+                } else {
+                    this.lch_l = this.hsluv_l;
+                    this.calculateBoundingLines(this.hsluv_l);
+                    const max = this.calcMaxChromaHsluv(this.hsluv_h);
+                    this.lch_c = max / 100 * this.hsluv_s;
+                }
+                this.lch_h = this.hsluv_h;
+            }
+
+            lchToHsluv() {
+                if (this.lch_l > 99.9999999) {
+                    this.hsluv_s = 0;
+                    this.hsluv_l = 100;
+                } else if (this.lch_l < 0.00000001) {
+                    this.hsluv_s = 0;
+                    this.hsluv_l = 0;
+                } else {
+                    this.calculateBoundingLines(this.lch_l);
+                    const max = this.calcMaxChromaHsluv(this.lch_h);
+                    this.hsluv_s = this.lch_c / max * 100;
+                    this.hsluv_l = this.lch_l;
+                }
+                this.hsluv_h = this.lch_h;
+            }
+
+            hpluvToLch() {
+                if (this.hpluv_l > 99.9999999) {
+                    this.lch_l = 100;
+                    this.lch_c = 0;
+                } else if (this.hpluv_l < 0.00000001) {
+                    this.lch_l = 0;
+                    this.lch_c = 0;
+                } else {
+                    this.lch_l = this.hpluv_l;
+                    this.calculateBoundingLines(this.hpluv_l);
+                    const max = this.calcMaxChromaHpluv();
+                    this.lch_c = max / 100 * this.hpluv_p;
+                }
+                this.lch_h = this.hpluv_h;
+            }
+
+            lchToHpluv() {
+                if (this.lch_l > 99.9999999) {
+                    this.hpluv_p = 0;
+                    this.hpluv_l = 100;
+                } else if (this.lch_l < 0.00000001) {
+                    this.hpluv_p = 0;
+                    this.hpluv_l = 0;
+                } else {
+                    this.calculateBoundingLines(this.lch_l);
+                    const max = this.calcMaxChromaHpluv();
+                    this.hpluv_p = this.lch_c / max * 100;
+                    this.hpluv_l = this.lch_l;
+                }
+                this.hpluv_h = this.lch_h;
+            }
+
+            hsluvToRgb() {
+                this.hsluvToLch();
+                this.lchToLuv();
+                this.luvToXyz();
+                this.xyzToRgb();
+            }
+
+            rgbToHsluv() {
+                this.rgbToXyz();
+                this.xyzToLuv();
+                this.luvToLch();
+                this.lchToHpluv();
+                this.lchToHsluv();
+            }
+        }
+
+        Hsluv.refY = 1.0;
+        Hsluv.refU = 0.19783000664283;
+        Hsluv.refV = 0.46831999493879;
+        Hsluv.kappa = 903.2962962;
+        Hsluv.epsilon = 0.0088564516;
+        Hsluv.m_r0 = 3.240969941904521;
+        Hsluv.m_r1 = -1.537383177570093;
+        Hsluv.m_r2 = -0.498610760293;
+        Hsluv.m_g0 = -0.96924363628087;
+        Hsluv.m_g1 = 1.87596750150772;
+        Hsluv.m_g2 = 0.041555057407175;
+        Hsluv.m_b0 = 0.055630079696993;
+        Hsluv.m_b1 = -0.20397695888897;
+        Hsluv.m_b2 = 1.056971514242878;
+
+        // Color conversion utilities
+        const ColorConvert = {
+            rgbToHsl: function(r, g, b) {
+                r /= 255; g /= 255; b /= 255;
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h, s, l = (max + min) / 2;
+
+                if (max === min) {
+                    h = s = 0;
+                } else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                        case g: h = ((b - r) / d + 2) / 6; break;
+                        case b: h = ((r - g) / d + 4) / 6; break;
+                    }
+                }
+                return [h * 360, s * 100, l * 100];
+            },
+
+            hslToRgb: function(h, s, l) {
+                h /= 360; s /= 100; l /= 100;
+                let r, g, b;
+
+                if (s === 0) {
+                    r = g = b = l;
+                } else {
+                    const hue2rgb = (p, q, t) => {
+                        if (t < 0) t += 1;
+                        if (t > 1) t -= 1;
+                        if (t < 1/6) return p + (q - p) * 6 * t;
+                        if (t < 1/2) return q;
+                        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                        return p;
+                    };
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+                    r = hue2rgb(p, q, h + 1/3);
+                    g = hue2rgb(p, q, h);
+                    b = hue2rgb(p, q, h - 1/3);
+                }
+                return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+            },
+
+            rgbToHsluv: function(r, g, b) {
+                const c = new Hsluv();
+                c.rgb_r = r / 255;
+                c.rgb_g = g / 255;
+                c.rgb_b = b / 255;
+                c.rgbToHsluv();
+                return [c.hsluv_h, c.hsluv_s, c.hsluv_l];
+            },
+
+            hsluvToRgb: function(h, s, l) {
+                const clamp01 = (x) => Math.max(0, Math.min(1, x));
+                const c = new Hsluv();
+                c.hsluv_h = h;
+                c.hsluv_s = s;
+                c.hsluv_l = l;
+                c.hsluvToRgb();
+                return [
+                    Math.round(clamp01(c.rgb_r) * 255),
+                    Math.round(clamp01(c.rgb_g) * 255),
+                    Math.round(clamp01(c.rgb_b) * 255)
+                ];
+            },
+
+            rgbToOklch: function(r, g, b) {
+                const [l, c, h] = this.rgbToLch(r, g, b);
+                return [l * 100, c * 100, h];
+            },
+
+            oklchToRgb: function(l, c, h) {
+                return this.lchToRgb(l / 100, c / 100, h);
+            },
+
+            rgbToLch: function(r, g, b) {
+                r /= 255; g /= 255; b /= 255;
+                const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
+                const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
+                const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+
+                const l_ = Math.cbrt(l);
+                const m_ = Math.cbrt(m);
+                const s_ = Math.cbrt(s);
+
+                const L = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_;
+                const a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_;
+                const b_ = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_;
+
+                const C = Math.sqrt(a * a + b_ * b_);
+                let H = Math.atan2(b_, a) * 180 / Math.PI;
+                if (H < 0) H += 360;
+
+                return [L, C, H];
+            },
+
+            lchToRgb: function(L, C, H) {
+                const h = H * Math.PI / 180;
+                const a = C * Math.cos(h);
+                const b = C * Math.sin(h);
+
+                const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+                const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+                const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+
+                const l = l_ * l_ * l_;
+                const m = m_ * m_ * m_;
+                const s = s_ * s_ * s_;
+
+                let r = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+                let g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+                let b_ = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+
+                r = Math.max(0, Math.min(1, r));
+                g = Math.max(0, Math.min(1, g));
+                b_ = Math.max(0, Math.min(1, b_));
+
+                return [Math.round(r * 255), Math.round(g * 255), Math.round(b_ * 255)];
+            }
+        };
+
+        let colors = [];
+        let selectedColorIndex = -1;
+        let dragState = null;
+
+        const SESSION_STORAGE_KEY = 'colorpickerlist.state.v1';
+        let saveStateTimeoutId = null;
+
+        function normalizeColorEntry(entry) {
+            if (!entry || typeof entry !== 'object') return null;
+            const rgb = Array.isArray(entry.rgb) ? entry.rgb : null;
+            if (!rgb || rgb.length !== 3) return null;
+            const rr = Math.max(0, Math.min(255, Math.round(Number(rgb[0]))));
+            const gg = Math.max(0, Math.min(255, Math.round(Number(rgb[1]))));
+            const bb = Math.max(0, Math.min(255, Math.round(Number(rgb[2]))));
+            if (!Number.isFinite(rr) || !Number.isFinite(gg) || !Number.isFinite(bb)) return null;
+            const metadata = typeof entry.metadata === 'string' ? entry.metadata : '';
+            return { rgb: [rr, gg, bb], metadata };
+        }
+
+        function scheduleSaveState() {
+            if (saveStateTimeoutId !== null) {
+                clearTimeout(saveStateTimeoutId);
+            }
+            saveStateTimeoutId = setTimeout(() => {
+                saveStateTimeoutId = null;
+                saveStateToSessionStorage();
+            }, 100);
+        }
+
+        function saveStateToSessionStorage() {
+            try {
+                const snapshot = {
+                    version: 1,
+                    colors,
+                    selectedColorIndex
+                };
+                sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(snapshot));
+            } catch (e) {
+                console.warn('Failed to save state to sessionStorage', e);
+            }
+        }
+
+        function restoreStateFromSessionStorage() {
+            try {
+                const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+                if (!raw) return false;
+                const parsed = JSON.parse(raw);
+                if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.colors)) return false;
+
+                const restoredColors = parsed.colors.map(normalizeColorEntry).filter(Boolean);
+                if (restoredColors.length === 0) {
+                    colors = [];
+                    selectedColorIndex = -1;
+                } else {
+                    colors = restoredColors;
+                    const idx = Number(parsed.selectedColorIndex);
+                    selectedColorIndex = Number.isFinite(idx) ? Math.trunc(idx) : -1;
+                    if (selectedColorIndex < 0 || selectedColorIndex >= colors.length) {
+                        selectedColorIndex = 0;
+                    }
+                }
+
+                renderColorList();
+                updateColorNames();
+                updateAllPickers();
+                return true;
+            } catch (e) {
+                console.warn('Failed to restore state from sessionStorage', e);
+                return false;
+            }
+        }
+
+        window.addEventListener('beforeunload', () => {
+            saveStateToSessionStorage();
+        });
+
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(x => {
+                const hex = Math.round(x).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? [
+                parseInt(result[1], 16),
+                parseInt(result[2], 16),
+                parseInt(result[3], 16)
+            ] : [0, 0, 0];
+        }
+
+        let colornamesLuvIndex = null;
+
+        function rgbToLuv(r, g, b) {
+            const c = new Hsluv();
+            c.rgb_r = r / 255;
+            c.rgb_g = g / 255;
+            c.rgb_b = b / 255;
+            c.rgbToXyz();
+            c.xyzToLuv();
+            const L = Number.isFinite(c.luv_l) ? c.luv_l : 0;
+            const u = Number.isFinite(c.luv_u) ? c.luv_u : 0;
+            const v = Number.isFinite(c.luv_v) ? c.luv_v : 0;
+            return [L, u, v];
+        }
+
+        function ensureColornamesLuvIndex() {
+            const namesObj = globalThis.colornames;
+            if (!namesObj || typeof namesObj !== 'object') {
+                if (colornamesLuvIndex === null) colornamesLuvIndex = [];
+                return;
+            }
+            if (colornamesLuvIndex !== null && colornamesLuvIndex.length > 0) return;
+            colornamesLuvIndex = Object.entries(namesObj).map(([hex, name]) => {
+                const [r, g, b] = hexToRgb(hex);
+                const luv = rgbToLuv(r, g, b);
+                return { hex, name, luv };
+            });
+        }
+
+        function closestColorName(rgb) {
+            ensureColornamesLuvIndex();
+            if (!colornamesLuvIndex || colornamesLuvIndex.length === 0) return '';
+            const [L0, u0, v0] = rgbToLuv(rgb[0], rgb[1], rgb[2]);
+            let best = colornamesLuvIndex[0];
+            let bestD = Infinity;
+            for (const entry of colornamesLuvIndex) {
+                const dL = (L0 - entry.luv[0]) * 2;
+                const du = u0 - entry.luv[1];
+                const dv = v0 - entry.luv[2];
+                const d = dL * dL + du * du + dv * dv;
+                if (d < bestD) {
+                    bestD = d;
+                    best = entry;
+                }
+            }
+            return best?.name || '';
+        }
+
+        function updateColorNames() {
+            for (let i = 0; i < colors.length; i++) {
+                const el = document.getElementById(`colorName_${i}`);
+                if (!el) continue;
+                el.textContent = closestColorName(colors[i].rgb);
+            }
+        }
+
+        function onColorsChanged() {
+            renderColorList();
+            updateColorNames();
+            updateAllPickers();
+            scheduleSaveState();
+        }
+
+        function onSelectionChanged() {
+            updateAllPickers();
+            scheduleSaveState();
+        }
+
+        function addColor(rgb = null, metadata = '') {
+            if (!rgb) {
+                rgb = [
+                    Math.floor(Math.random() * 256),
+                    Math.floor(Math.random() * 256),
+                    Math.floor(Math.random() * 256)
+                ];
+            }
+            colors.push({ rgb, metadata });
+            onColorsChanged();
+        }
+
+        function deleteColor(index) {
+            colors.splice(index, 1);
+            if (selectedColorIndex === index) selectedColorIndex = -1;
+            else if (selectedColorIndex > index) selectedColorIndex--;
+            onColorsChanged();
+        }
+
+        function clearAll() {
+            if (confirm('Clear all colors?')) {
+                colors = [];
+                selectedColorIndex = -1;
+                onColorsChanged();
+            }
+        }
+
+        function updateColor(index, field, value) {
+            const color = colors[index];
+            try {
+                if (field === 'metadata') {
+                    color.metadata = value;
+                } else if (field === 'rgb') {
+                    const match = value.match(/(\d+)\s+(\d+)\s+(\d+)/);
+                    if (match) {
+                        color.rgb = [
+                            Math.max(0, Math.min(255, parseInt(match[1]))),
+                            Math.max(0, Math.min(255, parseInt(match[2]))),
+                            Math.max(0, Math.min(255, parseInt(match[3])))
+                        ];
+                    }
+                } else if (field === 'hsl') {
+                    const match = value.match(/(\d+\.?\d*)[\s,]+(\d+\.?\d*)%?[\s,]+(\d+\.?\d*)%?/);
+                    if (match) {
+                        const h = parseFloat(match[1]) % 360;
+                        const s = Math.max(0, Math.min(100, parseFloat(match[2])));
+                        const l = Math.max(0, Math.min(100, parseFloat(match[3])));
+                        color.rgb = ColorConvert.hslToRgb(h, s, l);
+                    }
+                } else if (field === 'hsluv') {
+                    const match = value.match(/(\d+\.?\d*)[\s,]+(\d+\.?\d*)%?[\s,]+(\d+\.?\d*)%?/);
+                    if (match) {
+                        const h = parseFloat(match[1]) % 360;
+                        const s = Math.max(0, Math.min(100, parseFloat(match[2])));
+                        const l = Math.max(0, Math.min(100, parseFloat(match[3])));
+                        color.rgb = ColorConvert.hsluvToRgb(h, s, l);
+                    }
+                } else if (field === 'oklch') {
+                    const match = value.match(/(\d+\.?\d*)[\s,]+(\d+\.?\d*)[\s,]+(\d+\.?\d*)/);
+                    if (match) {
+                        const l = Math.max(0, Math.min(100, parseFloat(match[1])));
+                        const c = Math.max(0, Math.min(100, parseFloat(match[2])));
+                        const h = parseFloat(match[3]) % 360;
+                        color.rgb = ColorConvert.oklchToRgb(l, c, h);
+                    }
+                } else if (field === 'hex') {
+                    if (/^#?[0-9A-Fa-f]{6}$/.test(value)) {
+                        color.rgb = hexToRgb(value);
+                    }
+                }
+                onColorsChanged();
+            } catch (e) {
+                console.error('Error updating color:', e);
+            }
+        }
+
+        function renderColorList() {
+            const tbody = document.getElementById('colorList');
+            tbody.innerHTML = '';
+
+            colors.forEach((color, index) => {
+                const [r, g, b] = color.rgb;
+                const [h, s, l] = ColorConvert.rgbToHsl(r, g, b);
+                const [hh, ss, ll] = ColorConvert.rgbToHsluv(r, g, b);
+                const [L, C, H] = ColorConvert.rgbToOklch(r, g, b);
+                const hex = rgbToHex(r, g, b);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="row-number">${index + 1}</td>
+                    <td><div class="color-swatch" style="background-color: ${hex}" onclick="selectColor(${index})"></div></td>
+                    <td id="colorName_${index}"></td>
+                    <td><input type="text" value="${color.metadata || ''}" onchange="updateColor(${index}, 'metadata', this.value)" placeholder="metadata"></td>
+                    <td><input type="text" value="${r} ${g} ${b}" onchange="updateColor(${index}, 'rgb', this.value)"></td>
+                    <td><input type="text" value="${h.toFixed(1)} ${s.toFixed(1)}% ${l.toFixed(1)}%" onchange="updateColor(${index}, 'hsl', this.value)"></td>
+                    <td><input type="text" value="${hh.toFixed(1)} ${ss.toFixed(1)}% ${ll.toFixed(1)}%" onchange="updateColor(${index}, 'hsluv', this.value)"></td>
+                    <td><input type="text" value="${L.toFixed(1)} ${C.toFixed(1)} ${H.toFixed(1)}" onchange="updateColor(${index}, 'oklch', this.value)"></td>
+                    <td><input type="text" value="${hex}" onchange="updateColor(${index}, 'hex', this.value)"></td>
+                    <td><button class="delete-btn" onclick="deleteColor(${index})">Delete</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function selectColor(index) {
+            selectedColorIndex = index;
+            onSelectionChanged();
+        }
+
+        function copyColumn(column) {
+            const values = colors.map(color => {
+                const [r, g, b] = color.rgb;
+                const metadata = color.metadata || '';
+                const metadataPrefix = metadata ? metadata + ' ' : '';
+
+                switch (column) {
+                    case 'metadata':
+                        return metadata;
+                    case 'rgb':
+                        return metadataPrefix + `${r} ${g} ${b}`;
+                    case 'hsl':
+                        const [h, s, l] = ColorConvert.rgbToHsl(r, g, b);
+                        return metadataPrefix + `${h.toFixed(1)} ${s.toFixed(1)}% ${l.toFixed(1)}%`;
+                    case 'hsluv':
+                        const [hh, ss, ll] = ColorConvert.rgbToHsluv(r, g, b);
+                        return metadataPrefix + `${hh.toFixed(1)} ${ss.toFixed(1)}% ${ll.toFixed(1)}%`;
+                    case 'oklch':
+                        const [L, C, H] = ColorConvert.rgbToOklch(r, g, b);
+                        return metadataPrefix + `${L.toFixed(1)} ${C.toFixed(1)} ${H.toFixed(1)}`;
+                    case 'hex':
+                        return metadataPrefix + rgbToHex(r, g, b);
+                }
+            }).join('\n');
+
+            navigator.clipboard.writeText(values).then(() => {
+                showToast(`${column.toUpperCase()} column copied!`);
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function importColors() {
+            document.getElementById('importModal').classList.add('show');
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('show');
+            document.getElementById('importTextarea').value = '';
+            document.getElementById('fileName').textContent = '';
+            const clearEl = document.getElementById('import_clear_existing');
+            if (clearEl) clearEl.checked = true;
+        }
+
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('fileName').textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('importTextarea').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        function processImport() {
+            const input = document.getElementById('importTextarea').value;
+            if (!input.trim()) {
+                closeImportModal();
+                return;
+            }
+
+            const clearExisting = !!document.getElementById('import_clear_existing')?.checked;
+            const imported = [];
+
+            const lines = input.split('\n').filter(l => l.trim());
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+
+                let metadata = '';
+                let colorPart = line;
+
+                // Smart parsing: extract metadata and color
+                // Try to find hex color
+                const hexMatch = line.match(/#[0-9A-Fa-f]{6}/);
+                if (hexMatch) {
+                    metadata = line.substring(0, hexMatch.index).trim();
+                    colorPart = hexMatch[0];
+                    imported.push({ rgb: hexToRgb(colorPart), metadata });
+                    return;
+                }
+
+                // Try to find RGB (space-separated)
+                const rgbMatch = line.match(/(\d+)\s+(\d+)\s+(\d+)/);
+                if (rgbMatch) {
+                    metadata = line.substring(0, rgbMatch.index).trim();
+                    const r = parseInt(rgbMatch[1]);
+                    const g = parseInt(rgbMatch[2]);
+                    const b = parseInt(rgbMatch[3]);
+                    if (r <= 255 && g <= 255 && b <= 255) {
+                        imported.push({ rgb: [r, g, b], metadata });
+                        return;
+                    }
+                }
+
+                // Try to find RGB (comma-separated)
+                const rgbCommaMatch = line.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+                if (rgbCommaMatch) {
+                    metadata = line.substring(0, rgbCommaMatch.index).trim();
+                    const r = parseInt(rgbCommaMatch[1]);
+                    const g = parseInt(rgbCommaMatch[2]);
+                    const b = parseInt(rgbCommaMatch[3]);
+                    if (r <= 255 && g <= 255 && b <= 255) {
+                        imported.push({ rgb: [r, g, b], metadata });
+                        return;
+                    }
+                }
+            });
+
+            if (clearExisting) {
+                colors = imported;
+                selectedColorIndex = colors.length ? 0 : -1;
+            } else {
+                colors = colors.concat(imported);
+                if (colors.length && (selectedColorIndex < 0 || selectedColorIndex >= colors.length)) {
+                    selectedColorIndex = 0;
+                }
+            }
+
+            onColorsChanged();
+
+            closeImportModal();
+            showToast(`Imported ${imported.length} colors`);
+        }
+
+        function exportColors() {
+            document.getElementById('exportModal').classList.add('show');
+            updateExportPreview();
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('show');
+            document.getElementById('exportTextarea').value = '';
+        }
+
+        function getExportFlags() {
+            return {
+                metadata: !!document.getElementById('export_metadata')?.checked,
+                rgb: !!document.getElementById('export_rgb')?.checked,
+                hsl: !!document.getElementById('export_hsl')?.checked,
+                hsluv: !!document.getElementById('export_hsluv')?.checked,
+                oklch: !!document.getElementById('export_oklch')?.checked,
+                hex: !!document.getElementById('export_hex')?.checked,
+                name: !!document.getElementById('export_name')?.checked
+            };
+        }
+
+        function getExportSeparator() {
+            const raw = document.getElementById('export_separator')?.value;
+            if (raw === undefined || raw === null) return ' | ';
+            const trimmed = String(raw);
+            if (trimmed.length === 0) return ' ';
+            return ` ${trimmed} `;
+        }
+
+        function exportPadLeft(str, width) {
+            const s = String(str);
+            return s.length >= width ? s : (' '.repeat(width - s.length) + s);
+        }
+
+        function exportPadRight(str, width) {
+            const s = String(str);
+            return s.length >= width ? s : (s + ' '.repeat(width - s.length));
+        }
+
+        function formatExportRgb(r, g, b) {
+            return `${exportPadLeft(r, 4)}${exportPadLeft(g, 4)}${exportPadLeft(b, 4)}`;
+        }
+
+        function formatExportHslLike(h, s, l) {
+            const hue = exportPadLeft(Number(h).toFixed(1), 5);
+            const sat = exportPadLeft(`${Number(s).toFixed(1)}%`, 6);
+            const lig = exportPadLeft(`${Number(l).toFixed(1)}%`, 6);
+            return exportPadRight(`${hue} ${sat} ${lig}`, 20);
+        }
+
+        function buildExportText() {
+            const flags = getExportFlags();
+            const sep = getExportSeparator();
+            return colors.map(color => {
+                const [r, g, b] = color.rgb;
+                const parts = [];
+
+                if (flags.metadata) {
+                    const metadata = color.metadata || '';
+                    if (metadata) parts.push(metadata);
+                }
+                if (flags.rgb) {
+                    parts.push(formatExportRgb(r, g, b));
+                }
+                if (flags.hsl) {
+                    const [h, s, l] = ColorConvert.rgbToHsl(r, g, b);
+                    parts.push(formatExportHslLike(h, s, l));
+                }
+                if (flags.hsluv) {
+                    const [hh, ss, ll] = ColorConvert.rgbToHsluv(r, g, b);
+                    parts.push(formatExportHslLike(hh, ss, ll));
+                }
+                if (flags.oklch) {
+                    const [L, C, H] = ColorConvert.rgbToOklch(r, g, b);
+                    parts.push(`${L.toFixed(1)} ${C.toFixed(1)} ${H.toFixed(1)}`);
+                }
+                if (flags.hex) {
+                    parts.push(rgbToHex(r, g, b));
+                }
+                if (flags.name) {
+                    parts.push(closestColorName(color.rgb));
+                }
+
+                return parts.join(sep);
+            }).join('\n');
+        }
+
+        function updateExportPreview() {
+            const textarea = document.getElementById('exportTextarea');
+            if (!textarea) return;
+            textarea.value = buildExportText();
+        }
+
+        function copyExport() {
+            const textarea = document.getElementById('exportTextarea');
+            if (!textarea) return;
+            textarea.value = buildExportText();
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                showToast('Export copied!');
+            });
+        }
+
+        // Drawing functions
+        function drawHSLuv_HL(s) {
+            const canvas = document.getElementById('hsluv_hl_canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const hue = (x / w) * 360;
+                    const light = (y / h) * 100;
+                    const [r, g, b] = ColorConvert.hsluvToRgb(hue, s, light);
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+
+        function drawHSLuv_S_Slider(h, l) {
+            const canvas = document.getElementById('hsluv_s_canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, height = canvas.height;
+
+            for (let y = 0; y < height; y++) {
+                const sat = (y / height) * 100;
+                const [r, g, b] = ColorConvert.hsluvToRgb(h, sat, l);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(0, y, w, 1);
+            }
+        }
+
+        function drawHSL_HL(s) {
+            const canvas = document.getElementById('hsl_hl_canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const hue = (x / w) * 360;
+                    const light = (y / h) * 100;
+                    const [r, g, b] = ColorConvert.hslToRgb(hue, s, light);
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+
+        function drawHSL_S_Slider(h, l) {
+            const canvas = document.getElementById('hsl_s_canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, height = canvas.height;
+
+            for (let y = 0; y < height; y++) {
+                const sat = (y / height) * 100;
+                const [r, g, b] = ColorConvert.hslToRgb(h, sat, l);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(0, y, w, 1);
+            }
+        }
+
+        function drawHSLuv_HS(l) {
+            const canvas = document.getElementById('hsluv_hs_canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const hue = (x / w) * 360;
+                    const sat = (y / h) * 100;
+                    const [r, g, b] = ColorConvert.hsluvToRgb(hue, sat, l);
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+
+        function drawHSLuv_L_Slider(h, s) {
+            const canvas = document.getElementById('hsluv_l_canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, height = canvas.height;
+
+            for (let y = 0; y < height; y++) {
+                const light = (y / height) * 100;
+                const [r, g, b] = ColorConvert.hsluvToRgb(h, s, light);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(0, y, w, 1);
+            }
+        }
+
+        function drawOKLCH_LC(h) {
+            const canvas = document.getElementById('oklch_lc_canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, height = canvas.height;
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < w; x++) {
+                    const light = (x / w) * 100;
+                    const chroma = (y / height) * 50;
+                    const [r, g, b] = ColorConvert.oklchToRgb(light, chroma, h);
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+
+        function drawOKLCH_H_Slider(l, c) {
+            const canvas = document.getElementById('oklch_h_canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, height = canvas.height;
+
+            for (let y = 0; y < height; y++) {
+                const hue = (y / height) * 360;
+                const [r, g, b] = ColorConvert.oklchToRgb(l, c, hue);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(0, y, w, 1);
+            }
+        }
+
+        function updateAllPickers() {
+            const selectedColor = selectedColorIndex >= 0 ? colors[selectedColorIndex] : null;
+
+            if (selectedColor) {
+                const [r, g, b] = selectedColor.rgb;
+                const [h, s, l] = ColorConvert.rgbToHsl(r, g, b);
+                const [hh, ss, ll] = ColorConvert.rgbToHsluv(r, g, b);
+                const [L, C, H] = ColorConvert.rgbToOklch(r, g, b);
+
+                drawHSLuv_HL(ss);
+                drawHSLuv_S_Slider(hh, ll);
+                drawHSL_HL(s);
+                drawHSL_S_Slider(h, l);
+                drawHSLuv_HS(ll);
+                drawHSLuv_L_Slider(hh, ss);
+                drawOKLCH_LC(H);
+                drawOKLCH_H_Slider(L, C);
+            } else if (colors.length > 0) {
+                const [r, g, b] = colors[0].rgb;
+                const [h, s, l] = ColorConvert.rgbToHsl(r, g, b);
+                const [hh, ss, ll] = ColorConvert.rgbToHsluv(r, g, b);
+                const [L, C, H] = ColorConvert.rgbToOklch(r, g, b);
+
+                drawHSLuv_HL(100);
+                drawHSLuv_S_Slider(0, 50);
+                drawHSL_HL(100);
+                drawHSL_S_Slider(0, 50);
+                drawHSLuv_HS(50);
+                drawHSLuv_L_Slider(0, 100);
+                drawOKLCH_LC(0);
+                drawOKLCH_H_Slider(50, 25);
+            } else {
+                drawHSLuv_HL(100);
+                drawHSLuv_S_Slider(0, 50);
+                drawHSL_HL(100);
+                drawHSL_S_Slider(0, 50);
+                drawHSLuv_HS(50);
+                drawHSLuv_L_Slider(0, 100);
+                drawOKLCH_LC(0);
+                drawOKLCH_H_Slider(50, 25);
+            }
+
+            updateHSLuv_HL_Markers();
+            updateHSL_HL_Markers();
+            updateHSLuv_HS_Markers();
+            updateOKLCH_LC_Markers();
+        }
+
+        function updateHSLuv_HL_Markers() {
+            const container = document.getElementById('hsluv_hl_markers');
+            container.innerHTML = '';
+            const canvas = document.getElementById('hsluv_hl_canvas');
+
+            colors.forEach((color, index) => {
+                const [r, g, b] = color.rgb;
+                const [h, s, l] = ColorConvert.rgbToHsluv(r, g, b);
+                const x = (h / 360) * canvas.width;
+                const y = (l / 100) * canvas.height;
+
+                const marker = createMarker(x, y, rgbToHex(r, g, b), index);
+                marker.dataset.picker = 'hsluv_hl';
+                marker.dataset.index = index;
+                container.appendChild(marker);
+            });
+
+            updateSliderMarker('hsluv_s_slider', selectedColorIndex >= 0 ? selectedColorIndex : 0);
+        }
+
+        function updateHSL_HL_Markers() {
+            const container = document.getElementById('hsl_hl_markers');
+            container.innerHTML = '';
+            const canvas = document.getElementById('hsl_hl_canvas');
+
+            colors.forEach((color, index) => {
+                const [r, g, b] = color.rgb;
+                const [h, s, l] = ColorConvert.rgbToHsl(r, g, b);
+                const x = (h / 360) * canvas.width;
+                const y = (l / 100) * canvas.height;
+
+                const marker = createMarker(x, y, rgbToHex(r, g, b), index);
+                marker.dataset.picker = 'hsl_hl';
+                marker.dataset.index = index;
+                container.appendChild(marker);
+            });
+
+            updateSliderMarker('hsl_s_slider', selectedColorIndex >= 0 ? selectedColorIndex : 0);
+        }
+
+        function updateHSLuv_HS_Markers() {
+            const container = document.getElementById('hsluv_hs_markers');
+            container.innerHTML = '';
+            const canvas = document.getElementById('hsluv_hs_canvas');
+
+            colors.forEach((color, index) => {
+                const [r, g, b] = color.rgb;
+                const [h, s, l] = ColorConvert.rgbToHsluv(r, g, b);
+                const x = (h / 360) * canvas.width;
+                const y = (s / 100) * canvas.height;
+
+                const marker = createMarker(x, y, rgbToHex(r, g, b), index);
+                marker.dataset.picker = 'hsluv_hs';
+                marker.dataset.index = index;
+                container.appendChild(marker);
+            });
+
+            updateSliderMarker('hsluv_l_slider', selectedColorIndex >= 0 ? selectedColorIndex : 0);
+        }
+
+        function updateOKLCH_LC_Markers() {
+            const container = document.getElementById('oklch_lc_markers');
+            container.innerHTML = '';
+            const canvas = document.getElementById('oklch_lc_canvas');
+
+            colors.forEach((color, index) => {
+                const [r, g, b] = color.rgb;
+                const [L, C, H] = ColorConvert.rgbToOklch(r, g, b);
+                const x = (L / 100) * canvas.width;
+                const y = (C / 50) * canvas.height;
+
+                const marker = createMarker(x, y, rgbToHex(r, g, b), index);
+                marker.dataset.picker = 'oklch_lc';
+                marker.dataset.index = index;
+                container.appendChild(marker);
+            });
+
+            updateSliderMarker('oklch_h_slider', selectedColorIndex >= 0 ? selectedColorIndex : 0);
+        }
+
+        function createMarker(x, y, color, index) {
+            const marker = document.createElement('div');
+            marker.className = 'marker' + (index === selectedColorIndex ? ' selected' : '');
+            marker.style.left = x + 'px';
+            marker.style.top = y + 'px';
+            marker.style.backgroundColor = color;
+            return marker;
+        }
+
+        function updateSliderMarker(sliderId, colorIndex) {
+            if (colorIndex < 0 || colorIndex >= colors.length) return;
+
+            const slider = document.getElementById(sliderId);
+            slider.innerHTML = '';
+
+            const [r, g, b] = colors[colorIndex].rgb;
+            let y = 0;
+
+            if (sliderId === 'hsl_l_slider') {
+                const [h, s, l] = ColorConvert.rgbToHsl(r, g, b);
+                y = (l / 100) * 257;
+            } else if (sliderId === 'hsl_s_slider') {
+                const [h, s, l] = ColorConvert.rgbToHsl(r, g, b);
+                y = (s / 100) * 257;
+            } else if (sliderId === 'hsluv_s_slider') {
+                const [h, s, l] = ColorConvert.rgbToHsluv(r, g, b);
+                y = (s / 100) * 257;
+            } else if (sliderId === 'hsluv_l_slider') {
+                const [h, s, l] = ColorConvert.rgbToHsluv(r, g, b);
+                y = (l / 100) * 257;
+            } else if (sliderId === 'oklch_h_slider') {
+                const [L, C, H] = ColorConvert.rgbToOklch(r, g, b);
+                y = (H / 360) * 257;
+            }
+
+            const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            polygon.setAttribute('points', '-8,-4 -1,0 -8,4');
+            polygon.setAttribute('fill', 'white');
+            polygon.setAttribute('stroke', 'black');
+            polygon.setAttribute('stroke-width', '1');
+            polygon.setAttribute('transform', `translate(0, ${y})`);
+            slider.appendChild(polygon);
+
+            const polygon2 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            polygon2.setAttribute('points', '38,-4 31,0 38,4');
+            polygon2.setAttribute('fill', 'white');
+            polygon2.setAttribute('stroke', 'black');
+            polygon2.setAttribute('stroke-width', '1');
+            polygon2.setAttribute('transform', `translate(0, ${y})`);
+            slider.appendChild(polygon2);
+        }
+
+        // Interaction handlers
+        function setupSquareInteraction(canvasId, markersId, updateFn) {
+            const canvas = document.getElementById(canvasId);
+            const markers = document.getElementById(markersId);
+
+            canvas.addEventListener('mousedown', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (selectedColorIndex >= 0) {
+                    updateFn(selectedColorIndex, x, y);
+                } else {
+                    const newRgb = updateFn(-1, x, y);
+                    if (newRgb) addColor(newRgb);
+                }
+            });
+
+            markers.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('marker')) {
+                    const index = parseInt(e.target.dataset.index);
+                    selectedColorIndex = index;
+                    onSelectionChanged();
+
+                    dragState = {
+                        picker: e.target.dataset.picker,
+                        index: index,
+                        canvas: canvas
+                    };
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function setupSliderInteraction(canvasId, updateFn) {
+            const canvas = document.getElementById(canvasId);
+
+            canvas.addEventListener('mousedown', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+
+                if (selectedColorIndex >= 0) {
+                    updateFn(selectedColorIndex, y);
+                }
+            });
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (!dragState) return;
+
+            const rect = dragState.canvas.getBoundingClientRect();
+            const x = Math.max(0, Math.min(dragState.canvas.width, e.clientX - rect.left));
+            const y = Math.max(0, Math.min(dragState.canvas.height, e.clientY - rect.top));
+
+            if (dragState.picker === 'hsluv_hl') {
+                updateHSLuv_HL_Color(dragState.index, x, y);
+            } else if (dragState.picker === 'hsl_hl') {
+                updateHSL_HL_Color(dragState.index, x, y);
+            } else if (dragState.picker === 'hsluv_hs') {
+                updateHSLuv_HS_Color(dragState.index, x, y);
+            } else if (dragState.picker === 'oklch_lc') {
+                updateOKLCH_LC_Color(dragState.index, x, y);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            dragState = null;
+        });
+
+        function updateHSLuv_HL_Color(index, x, y) {
+            const canvas = document.getElementById('hsluv_hl_canvas');
+            const h = (x / canvas.width) * 360;
+            const l = (y / canvas.height) * 100;
+            const [, s] = ColorConvert.rgbToHsluv(...colors[index].rgb);
+            colors[index].rgb = ColorConvert.hsluvToRgb(h, s, l);
+            onColorsChanged();
+        }
+
+        function updateHSLuv_S_Color(index, y) {
+            const canvas = document.getElementById('hsluv_s_canvas');
+            const s = (y / canvas.height) * 100;
+            const [h, , l] = ColorConvert.rgbToHsluv(...colors[index].rgb);
+            colors[index].rgb = ColorConvert.hsluvToRgb(h, s, l);
+            onColorsChanged();
+        }
+
+        function updateHSL_HL_Color(index, x, y) {
+            const canvas = document.getElementById('hsl_hl_canvas');
+            const h = (x / canvas.width) * 360;
+            const l = (y / canvas.height) * 100;
+            const [, s] = ColorConvert.rgbToHsl(...colors[index].rgb);
+            colors[index].rgb = ColorConvert.hslToRgb(h, s, l);
+            onColorsChanged();
+        }
+
+        function updateHSL_S_Color(index, y) {
+            const canvas = document.getElementById('hsl_s_canvas');
+            const s = (y / canvas.height) * 100;
+            const [h, , l] = ColorConvert.rgbToHsl(...colors[index].rgb);
+            colors[index].rgb = ColorConvert.hslToRgb(h, s, l);
+            onColorsChanged();
+        }
+
+        function updateHSLuv_HS_Color(index, x, y) {
+            const canvas = document.getElementById('hsluv_hs_canvas');
+            const h = (x / canvas.width) * 360;
+            const s = (y / canvas.height) * 100;
+            const [, , l] = ColorConvert.rgbToHsluv(...colors[index].rgb);
+            colors[index].rgb = ColorConvert.hsluvToRgb(h, s, l);
+            onColorsChanged();
+        }
+
+        function updateHSLuv_L_Color(index, y) {
+            const canvas = document.getElementById('hsluv_l_canvas');
+            const l = (y / canvas.height) * 100;
+            const [h, s] = ColorConvert.rgbToHsluv(...colors[index].rgb);
+            colors[index].rgb = ColorConvert.hsluvToRgb(h, s, l);
+            onColorsChanged();
+        }
+
+        function updateOKLCH_LC_Color(index, x, y) {
+            const canvas = document.getElementById('oklch_lc_canvas');
+            const L = (x / canvas.width) * 100;
+            const C = (y / canvas.height) * 50;
+            const [, , H] = ColorConvert.rgbToOklch(...colors[index].rgb);
+            colors[index].rgb = ColorConvert.oklchToRgb(L, C, H);
+            onColorsChanged();
+        }
+
+        function updateOKLCH_H_Color(index, y) {
+            const canvas = document.getElementById('oklch_h_canvas');
+            const H = (y / canvas.height) * 360;
+            const [L, C] = ColorConvert.rgbToOklch(...colors[index].rgb);
+            colors[index].rgb = ColorConvert.oklchToRgb(L, C, H);
+            onColorsChanged();
+        }
+
+        // Setup interactions
+        setupSquareInteraction('hsluv_hl_canvas', 'hsluv_hl_markers', updateHSLuv_HL_Color);
+        setupSliderInteraction('hsluv_s_canvas', updateHSLuv_S_Color);
+        setupSquareInteraction('hsl_hl_canvas', 'hsl_hl_markers', updateHSL_HL_Color);
+        setupSliderInteraction('hsl_s_canvas', updateHSL_S_Color);
+        setupSquareInteraction('hsluv_hs_canvas', 'hsluv_hs_markers', updateHSLuv_HS_Color);
+        setupSliderInteraction('hsluv_l_canvas', updateHSLuv_L_Color);
+        setupSquareInteraction('oklch_lc_canvas', 'oklch_lc_markers', updateOKLCH_LC_Color);
+        setupSliderInteraction('oklch_h_canvas', updateOKLCH_H_Color);
+
+        const restored = restoreStateFromSessionStorage();
+        if (!restored) {
+            addColor([255, 0, 0]);
+            addColor([0, 255, 0]);
+            addColor([0, 0, 255]);
+            selectedColorIndex = 0;
+            updateAllPickers();
+            scheduleSaveState();
+        }
+        // License: https://creativecommons.org/publicdomain/zero/1.0/
+        globalThis.colornames = {
+  "#acc2d9":	"cloudy blue",
+  "#56ae57":	"dark pastel green",
+  "#b2996e":	"dust",
+  "#a8ff04":	"electric lime",
+  "#69d84f":	"fresh green",
+  "#894585":	"light eggplant",
+  "#70b23f":	"nasty green",
+  "#d4ffff":	"really light blue",
+  "#65ab7c":	"tea",
+  "#952e8f":	"warm purple",
+  "#fcfc81":	"yellowish tan",
+  "#a5a391":	"cement",
+  "#388004":	"dark grass green",
+  "#4c9085":	"dusty teal",
+  "#5e9b8a":	"grey teal",
+  "#efb435":	"macaroni and cheese",
+  "#d99b82":	"pinkish tan",
+  "#0a5f38":	"spruce",
+  "#0c06f7":	"strong blue",
+  "#61de2a":	"toxic green",
+  "#3778bf":	"windows blue",
+  "#2242c7":	"blue blue",
+  "#533cc6":	"blue with a hint of purple",
+  "#9bb53c":	"booger",
+  "#05ffa6":	"bright sea green",
+  "#1f6357":	"dark green blue",
+  "#017374":	"deep turquoise",
+  "#0cb577":	"green teal",
+  "#ff0789":	"strong pink",
+  "#afa88b":	"bland",
+  "#08787f":	"deep aqua",
+  "#dd85d7":	"lavender pink",
+  "#a6c875":	"light moss green",
+  "#a7ffb5":	"light seafoam green",
+  "#c2b709":	"olive yellow",
+  "#e78ea5":	"pig pink",
+  "#966ebd":	"deep lilac",
+  "#ccad60":	"desert",
+  "#ac86a8":	"dusty lavender",
+  "#947e94":	"purpley grey",
+  "#983fb2":	"purply",
+  "#ff63e9":	"candy pink",
+  "#b2fba5":	"light pastel green",
+  "#63b365":	"boring green",
+  "#8ee53f":	"kiwi green",
+  "#b7e1a1":	"light grey green",
+  "#ff6f52":	"orange pink",
+  "#bdf8a3":	"tea green",
+  "#d3b683":	"very light brown",
+  "#fffcc4":	"egg shell",
+  "#430541":	"eggplant purple",
+  "#ffb2d0":	"powder pink",
+  "#997570":	"reddish grey",
+  "#ad900d":	"baby shit brown",
+  "#c48efd":	"liliac",
+  "#507b9c":	"stormy blue",
+  "#7d7103":	"ugly brown",
+  "#fffd78":	"custard",
+  "#da467d":	"darkish pink",
+  "#410200":	"deep brown",
+  "#c9d179":	"greenish beige",
+  "#fffa86":	"manilla",
+  "#5684ae":	"off blue",
+  "#6b7c85":	"battleship grey",
+  "#6f6c0a":	"browny green",
+  "#7e4071":	"bruise",
+  "#009337":	"kelley green",
+  "#d0e429":	"sickly yellow",
+  "#fff917":	"sunny yellow",
+  "#1d5dec":	"azul",
+  "#054907":	"darkgreen",
+  "#b5ce08":	"green/yellow",
+  "#8fb67b":	"lichen",
+  "#c8ffb0":	"light light green",
+  "#fdde6c":	"pale gold",
+  "#ffdf22":	"sun yellow",
+  "#a9be70":	"tan green",
+  "#6832e3":	"burple",
+  "#fdb147":	"butterscotch",
+  "#c7ac7d":	"toupe",
+  "#fff39a":	"dark cream",
+  "#850e04":	"indian red",
+  "#efc0fe":	"light lavendar",
+  "#40fd14":	"poison green",
+  "#b6c406":	"baby puke green",
+  "#9dff00":	"bright yellow green",
+  "#3c4142":	"charcoal grey",
+  "#f2ab15":	"squash",
+  "#ac4f06":	"cinnamon",
+  "#c4fe82":	"light pea green",
+  "#2cfa1f":	"radioactive green",
+  "#9a6200":	"raw sienna",
+  "#ca9bf7":	"baby purple",
+  "#875f42":	"cocoa",
+  "#3a2efe":	"light royal blue",
+  "#fd8d49":	"orangeish",
+  "#8b3103":	"rust brown",
+  "#cba560":	"sand brown",
+  "#698339":	"swamp",
+  "#0cdc73":	"tealish green",
+  "#b75203":	"burnt siena",
+  "#7f8f4e":	"camo",
+  "#26538d":	"dusk blue",
+  "#63a950":	"fern",
+  "#c87f89":	"old rose",
+  "#b1fc99":	"pale light green",
+  "#ff9a8a":	"peachy pink",
+  "#f6688e":	"rosy pink",
+  "#76fda8":	"light bluish green",
+  "#53fe5c":	"light bright green",
+  "#4efd54":	"light neon green",
+  "#a0febf":	"light seafoam",
+  "#7bf2da":	"tiffany blue",
+  "#bcf5a6":	"washed out green",
+  "#ca6b02":	"browny orange",
+  "#107ab0":	"nice blue",
+  "#2138ab":	"sapphire",
+  "#719f91":	"greyish teal",
+  "#fdb915":	"orangey yellow",
+  "#fefcaf":	"parchment",
+  "#fcf679":	"straw",
+  "#1d0200":	"very dark brown",
+  "#cb6843":	"terracota",
+  "#31668a":	"ugly blue",
+  "#247afd":	"clear blue",
+  "#ffffb6":	"creme",
+  "#90fda9":	"foam green",
+  "#86a17d":	"grey/green",
+  "#fddc5c":	"light gold",
+  "#78d1b6":	"seafoam blue",
+  "#13bbaf":	"topaz",
+  "#fb5ffc":	"violet pink",
+  "#20f986":	"wintergreen",
+  "#ffe36e":	"yellow tan",
+  "#9d0759":	"dark fuchsia",
+  "#3a18b1":	"indigo blue",
+  "#c2ff89":	"light yellowish green",
+  "#d767ad":	"pale magenta",
+  "#720058":	"rich purple",
+  "#ffda03":	"sunflower yellow",
+  "#01c08d":	"green/blue",
+  "#ac7434":	"leather",
+  "#014600":	"racing green",
+  "#9900fa":	"vivid purple",
+  "#02066f":	"dark royal blue",
+  "#8e7618":	"hazel",
+  "#d1768f":	"muted pink",
+  "#96b403":	"booger green",
+  "#fdff63":	"canary",
+  "#95a3a6":	"cool grey",
+  "#7f684e":	"dark taupe",
+  "#751973":	"darkish purple",
+  "#089404":	"true green",
+  "#ff6163":	"coral pink",
+  "#598556":	"dark sage",
+  "#214761":	"dark slate blue",
+  "#3c73a8":	"flat blue",
+  "#ba9e88":	"mushroom",
+  "#021bf9":	"rich blue",
+  "#734a65":	"dirty purple",
+  "#23c48b":	"greenblue",
+  "#8fae22":	"icky green",
+  "#e6f2a2":	"light khaki",
+  "#4b57db":	"warm blue",
+  "#d90166":	"dark hot pink",
+  "#015482":	"deep sea blue",
+  "#9d0216":	"carmine",
+  "#728f02":	"dark yellow green",
+  "#ffe5ad":	"pale peach",
+  "#4e0550":	"plum purple",
+  "#f9bc08":	"golden rod",
+  "#ff073a":	"neon red",
+  "#c77986":	"old pink",
+  "#d6fffe":	"very pale blue",
+  "#fe4b03":	"blood orange",
+  "#fd5956":	"grapefruit",
+  "#fce166":	"sand yellow",
+  "#b2713d":	"clay brown",
+  "#1f3b4d":	"dark blue grey",
+  "#699d4c":	"flat green",
+  "#56fca2":	"light green blue",
+  "#fb5581":	"warm pink",
+  "#3e82fc":	"dodger blue",
+  "#a0bf16":	"gross green",
+  "#d6fffa":	"ice",
+  "#4f738e":	"metallic blue",
+  "#ffb19a":	"pale salmon",
+  "#5c8b15":	"sap green",
+  "#54ac68":	"algae",
+  "#89a0b0":	"bluey grey",
+  "#7ea07a":	"greeny grey",
+  "#1bfc06":	"highlighter green",
+  "#cafffb":	"light light blue",
+  "#b6ffbb":	"light mint",
+  "#a75e09":	"raw umber",
+  "#152eff":	"vivid blue",
+  "#8d5eb7":	"deep lavender",
+  "#5f9e8f":	"dull teal",
+  "#63f7b4":	"light greenish blue",
+  "#606602":	"mud green",
+  "#fc86aa":	"pinky",
+  "#8c0034":	"red wine",
+  "#758000":	"shit green",
+  "#ab7e4c":	"tan brown",
+  "#030764":	"darkblue",
+  "#fe86a4":	"rosa",
+  "#d5174e":	"lipstick",
+  "#fed0fc":	"pale mauve",
+  "#680018":	"claret",
+  "#fedf08":	"dandelion",
+  "#fe420f":	"orangered",
+  "#6f7c00":	"poop green",
+  "#ca0147":	"ruby",
+  "#1b2431":	"dark",
+  "#00fbb0":	"greenish turquoise",
+  "#db5856":	"pastel red",
+  "#ddd618":	"piss yellow",
+  "#41fdfe":	"bright cyan",
+  "#cf524e":	"dark coral",
+  "#21c36f":	"algae green",
+  "#a90308":	"darkish red",
+  "#6e1005":	"reddy brown",
+  "#fe828c":	"blush pink",
+  "#4b6113":	"camouflage green",
+  "#4da409":	"lawn green",
+  "#beae8a":	"putty",
+  "#0339f8":	"vibrant blue",
+  "#a88f59":	"dark sand",
+  "#5d21d0":	"purple/blue",
+  "#feb209":	"saffron",
+  "#4e518b":	"twilight",
+  "#964e02":	"warm brown",
+  "#85a3b2":	"bluegrey",
+  "#ff69af":	"bubble gum pink",
+  "#c3fbf4":	"duck egg blue",
+  "#2afeb7":	"greenish cyan",
+  "#005f6a":	"petrol",
+  "#0c1793":	"royal",
+  "#ffff81":	"butter",
+  "#f0833a":	"dusty orange",
+  "#f1f33f":	"off yellow",
+  "#b1d27b":	"pale olive green",
+  "#fc824a":	"orangish",
+  "#71aa34":	"leaf",
+  "#b7c9e2":	"light blue grey",
+  "#4b0101":	"dried blood",
+  "#a552e6":	"lightish purple",
+  "#af2f0d":	"rusty red",
+  "#8b88f8":	"lavender blue",
+  "#9af764":	"light grass green",
+  "#a6fbb2":	"light mint green",
+  "#ffc512":	"sunflower",
+  "#750851":	"velvet",
+  "#c14a09":	"brick orange",
+  "#fe2f4a":	"lightish red",
+  "#0203e2":	"pure blue",
+  "#0a437a":	"twilight blue",
+  "#a50055":	"violet red",
+  "#ae8b0c":	"yellowy brown",
+  "#fd798f":	"carnation",
+  "#bfac05":	"muddy yellow",
+  "#3eaf76":	"dark seafoam green",
+  "#c74767":	"deep rose",
+  "#b9484e":	"dusty red",
+  "#647d8e":	"grey/blue",
+  "#bffe28":	"lemon lime",
+  "#d725de":	"purple/pink",
+  "#b29705":	"brown yellow",
+  "#673a3f":	"purple brown",
+  "#a87dc2":	"wisteria",
+  "#fafe4b":	"banana yellow",
+  "#c0022f":	"lipstick red",
+  "#0e87cc":	"water blue",
+  "#8d8468":	"brown grey",
+  "#ad03de":	"vibrant purple",
+  "#8cff9e":	"baby green",
+  "#94ac02":	"barf green",
+  "#c4fff7":	"eggshell blue",
+  "#fdee73":	"sandy yellow",
+  "#33b864":	"cool green",
+  "#fff9d0":	"pale",
+  "#758da3":	"blue/grey",
+  "#f504c9":	"hot magenta",
+  "#77a1b5":	"greyblue",
+  "#8756e4":	"purpley",
+  "#889717":	"baby shit green",
+  "#c27e79":	"brownish pink",
+  "#017371":	"dark aquamarine",
+  "#9f8303":	"diarrhea",
+  "#f7d560":	"light mustard",
+  "#bdf6fe":	"pale sky blue",
+  "#75b84f":	"turtle green",
+  "#9cbb04":	"bright olive",
+  "#29465b":	"dark grey blue",
+  "#696006":	"greeny brown",
+  "#adf802":	"lemon green",
+  "#c1c6fc":	"light periwinkle",
+  "#35ad6b":	"seaweed green",
+  "#fffd37":	"sunshine yellow",
+  "#a442a0":	"ugly purple",
+  "#f36196":	"medium pink",
+  "#947706":	"puke brown",
+  "#fff4f2":	"very light pink",
+  "#1e9167":	"viridian",
+  "#b5c306":	"bile",
+  "#feff7f":	"faded yellow",
+  "#cffdbc":	"very pale green",
+  "#0add08":	"vibrant green",
+  "#87fd05":	"bright lime",
+  "#1ef876":	"spearmint",
+  "#7bfdc7":	"light aquamarine",
+  "#bcecac":	"light sage",
+  "#bbf90f":	"yellowgreen",
+  "#ab9004":	"baby poo",
+  "#1fb57a":	"dark seafoam",
+  "#00555a":	"deep teal",
+  "#a484ac":	"heather",
+  "#c45508":	"rust orange",
+  "#3f829d":	"dirty blue",
+  "#548d44":	"fern green",
+  "#c95efb":	"bright lilac",
+  "#3ae57f":	"weird green",
+  "#016795":	"peacock blue",
+  "#87a922":	"avocado green",
+  "#f0944d":	"faded orange",
+  "#5d1451":	"grape purple",
+  "#25ff29":	"hot green",
+  "#d0fe1d":	"lime yellow",
+  "#ffa62b":	"mango",
+  "#01b44c":	"shamrock",
+  "#ff6cb5":	"bubblegum",
+  "#6b4247":	"purplish brown",
+  "#c7c10c":	"vomit yellow",
+  "#b7fffa":	"pale cyan",
+  "#aeff6e":	"key lime",
+  "#ec2d01":	"tomato red",
+  "#76ff7b":	"lightgreen",
+  "#730039":	"merlot",
+  "#040348":	"night blue",
+  "#df4ec8":	"purpleish pink",
+  "#6ecb3c":	"apple",
+  "#8f9805":	"baby poop green",
+  "#5edc1f":	"green apple",
+  "#d94ff5":	"heliotrope",
+  "#c8fd3d":	"yellow/green",
+  "#070d0d":	"almost black",
+  "#4984b8":	"cool blue",
+  "#51b73b":	"leafy green",
+  "#ac7e04":	"mustard brown",
+  "#4e5481":	"dusk",
+  "#876e4b":	"dull brown",
+  "#58bc08":	"frog green",
+  "#2fef10":	"vivid green",
+  "#2dfe54":	"bright light green",
+  "#0aff02":	"fluro green",
+  "#9cef43":	"kiwi",
+  "#18d17b":	"seaweed",
+  "#35530a":	"navy green",
+  "#1805db":	"ultramarine blue",
+  "#6258c4":	"iris",
+  "#ff964f":	"pastel orange",
+  "#ffab0f":	"yellowish orange",
+  "#8f8ce7":	"perrywinkle",
+  "#24bca8":	"tealish",
+  "#3f012c":	"dark plum",
+  "#cbf85f":	"pear",
+  "#ff724c":	"pinkish orange",
+  "#280137":	"midnight purple",
+  "#b36ff6":	"light urple",
+  "#48c072":	"dark mint",
+  "#bccb7a":	"greenish tan",
+  "#a8415b":	"light burgundy",
+  "#06b1c4":	"turquoise blue",
+  "#cd7584":	"ugly pink",
+  "#f1da7a":	"sandy",
+  "#ff0490":	"electric pink",
+  "#805b87":	"muted purple",
+  "#50a747":	"mid green",
+  "#a8a495":	"greyish",
+  "#cfff04":	"neon yellow",
+  "#ffff7e":	"banana",
+  "#ff7fa7":	"carnation pink",
+  "#ef4026":	"tomato",
+  "#3c9992":	"sea",
+  "#886806":	"muddy brown",
+  "#04f489":	"turquoise green",
+  "#fef69e":	"buff",
+  "#cfaf7b":	"fawn",
+  "#3b719f":	"muted blue",
+  "#fdc1c5":	"pale rose",
+  "#20c073":	"dark mint green",
+  "#9b5fc0":	"amethyst",
+  "#0f9b8e":	"blue/green",
+  "#742802":	"chestnut",
+  "#9db92c":	"sick green",
+  "#a4bf20":	"pea",
+  "#cd5909":	"rusty orange",
+  "#ada587":	"stone",
+  "#be013c":	"rose red",
+  "#b8ffeb":	"pale aqua",
+  "#dc4d01":	"deep orange",
+  "#a2653e":	"earth",
+  "#638b27":	"mossy green",
+  "#419c03":	"grassy green",
+  "#b1ff65":	"pale lime green",
+  "#9dbcd4":	"light grey blue",
+  "#fdfdfe":	"pale grey",
+  "#77ab56":	"asparagus",
+  "#464196":	"blueberry",
+  "#990147":	"purple red",
+  "#befd73":	"pale lime",
+  "#32bf84":	"greenish teal",
+  "#af6f09":	"caramel",
+  "#a0025c":	"deep magenta",
+  "#ffd8b1":	"light peach",
+  "#7f4e1e":	"milk chocolate",
+  "#bf9b0c":	"ocher",
+  "#6ba353":	"off green",
+  "#f075e6":	"purply pink",
+  "#7bc8f6":	"lightblue",
+  "#475f94":	"dusky blue",
+  "#f5bf03":	"golden",
+  "#fffeb6":	"light beige",
+  "#fffd74":	"butter yellow",
+  "#895b7b":	"dusky purple",
+  "#436bad":	"french blue",
+  "#d0c101":	"ugly yellow",
+  "#c6f808":	"greeny yellow",
+  "#f43605":	"orangish red",
+  "#02c14d":	"shamrock green",
+  "#b25f03":	"orangish brown",
+  "#2a7e19":	"tree green",
+  "#490648":	"deep violet",
+  "#536267":	"gunmetal",
+  "#5a06ef":	"blue/purple",
+  "#cf0234":	"cherry",
+  "#c4a661":	"sandy brown",
+  "#978a84":	"warm grey",
+  "#1f0954":	"dark indigo",
+  "#03012d":	"midnight",
+  "#2bb179":	"bluey green",
+  "#c3909b":	"grey pink",
+  "#a66fb5":	"soft purple",
+  "#770001":	"blood",
+  "#922b05":	"brown red",
+  "#7d7f7c":	"medium grey",
+  "#990f4b":	"berry",
+  "#8f7303":	"poo",
+  "#c83cb9":	"purpley pink",
+  "#fea993":	"light salmon",
+  "#acbb0d":	"snot",
+  "#c071fe":	"easter purple",
+  "#ccfd7f":	"light yellow green",
+  "#00022e":	"dark navy blue",
+  "#828344":	"drab",
+  "#ffc5cb":	"light rose",
+  "#ab1239":	"rouge",
+  "#b0054b":	"purplish red",
+  "#99cc04":	"slime green",
+  "#937c00":	"baby poop",
+  "#019529":	"irish green",
+  "#ef1de7":	"pink/purple",
+  "#000435":	"dark navy",
+  "#42b395":	"greeny blue",
+  "#9d5783":	"light plum",
+  "#c8aca9":	"pinkish grey",
+  "#c87606":	"dirty orange",
+  "#aa2704":	"rust red",
+  "#e4cbff":	"pale lilac",
+  "#fa4224":	"orangey red",
+  "#0804f9":	"primary blue",
+  "#5cb200":	"kermit green",
+  "#76424e":	"brownish purple",
+  "#6c7a0e":	"murky green",
+  "#fbdd7e":	"wheat",
+  "#2a0134":	"very dark purple",
+  "#044a05":	"bottle green",
+  "#fd4659":	"watermelon",
+  "#0d75f8":	"deep sky blue",
+  "#fe0002":	"fire engine red",
+  "#cb9d06":	"yellow ochre",
+  "#fb7d07":	"pumpkin orange",
+  "#b9cc81":	"pale olive",
+  "#edc8ff":	"light lilac",
+  "#61e160":	"lightish green",
+  "#8ab8fe":	"carolina blue",
+  "#920a4e":	"mulberry",
+  "#fe02a2":	"shocking pink",
+  "#9a3001":	"auburn",
+  "#65fe08":	"bright lime green",
+  "#befdb7":	"celadon",
+  "#b17261":	"pinkish brown",
+  "#885f01":	"poo brown",
+  "#02ccfe":	"bright sky blue",
+  "#c1fd95":	"celery",
+  "#836539":	"dirt brown",
+  "#fb2943":	"strawberry",
+  "#84b701":	"dark lime",
+  "#b66325":	"copper",
+  "#7f5112":	"medium brown",
+  "#5fa052":	"muted green",
+  "#6dedfd":	"robin's egg",
+  "#0bf9ea":	"bright aqua",
+  "#c760ff":	"bright lavender",
+  "#ffffcb":	"ivory",
+  "#f6cefc":	"very light purple",
+  "#155084":	"light navy",
+  "#f5054f":	"pink red",
+  "#645403":	"olive brown",
+  "#7a5901":	"poop brown",
+  "#a8b504":	"mustard green",
+  "#3d9973":	"ocean green",
+  "#000133":	"very dark blue",
+  "#76a973":	"dusty green",
+  "#2e5a88":	"light navy blue",
+  "#0bf77d":	"minty green",
+  "#bd6c48":	"adobe",
+  "#ac1db8":	"barney",
+  "#2baf6a":	"jade green",
+  "#26f7fd":	"bright light blue",
+  "#aefd6c":	"light lime",
+  "#9b8f55":	"dark khaki",
+  "#ffad01":	"orange yellow",
+  "#c69c04":	"ocre",
+  "#f4d054":	"maize",
+  "#de9dac":	"faded pink",
+  "#05480d":	"british racing green",
+  "#c9ae74":	"sandstone",
+  "#60460f":	"mud brown",
+  "#98f6b0":	"light sea green",
+  "#8af1fe":	"robin egg blue",
+  "#2ee8bb":	"aqua marine",
+  "#11875d":	"dark sea green",
+  "#fdb0c0":	"soft pink",
+  "#b16002":	"orangey brown",
+  "#f7022a":	"cherry red",
+  "#d5ab09":	"burnt yellow",
+  "#86775f":	"brownish grey",
+  "#c69f59":	"camel",
+  "#7a687f":	"purplish grey",
+  "#042e60":	"marine",
+  "#c88d94":	"greyish pink",
+  "#a5fbd5":	"pale turquoise",
+  "#fffe71":	"pastel yellow",
+  "#6241c7":	"bluey purple",
+  "#fffe40":	"canary yellow",
+  "#d3494e":	"faded red",
+  "#985e2b":	"sepia",
+  "#a6814c":	"coffee",
+  "#ff08e8":	"bright magenta",
+  "#9d7651":	"mocha",
+  "#feffca":	"ecru",
+  "#98568d":	"purpleish",
+  "#9e003a":	"cranberry",
+  "#287c37":	"darkish green",
+  "#b96902":	"brown orange",
+  "#ba6873":	"dusky rose",
+  "#ff7855":	"melon",
+  "#94b21c":	"sickly green",
+  "#c5c9c7":	"silver",
+  "#661aee":	"purply blue",
+  "#6140ef":	"purpleish blue",
+  "#9be5aa":	"hospital green",
+  "#7b5804":	"shit brown",
+  "#276ab3":	"mid blue",
+  "#feb308":	"amber",
+  "#8cfd7e":	"easter green",
+  "#6488ea":	"soft blue",
+  "#056eee":	"cerulean blue",
+  "#b27a01":	"golden brown",
+  "#0ffef9":	"bright turquoise",
+  "#fa2a55":	"red pink",
+  "#820747":	"red purple",
+  "#7a6a4f":	"greyish brown",
+  "#f4320c":	"vermillion",
+  "#a13905":	"russet",
+  "#6f828a":	"steel grey",
+  "#a55af4":	"lighter purple",
+  "#ad0afd":	"bright violet",
+  "#004577":	"prussian blue",
+  "#658d6d":	"slate green",
+  "#ca7b80":	"dirty pink",
+  "#005249":	"dark blue green",
+  "#2b5d34":	"pine",
+  "#bff128":	"yellowy green",
+  "#b59410":	"dark gold",
+  "#2976bb":	"bluish",
+  "#014182":	"darkish blue",
+  "#bb3f3f":	"dull red",
+  "#fc2647":	"pinky red",
+  "#a87900":	"bronze",
+  "#82cbb2":	"pale teal",
+  "#667c3e":	"military green",
+  "#fe46a5":	"barbie pink",
+  "#fe83cc":	"bubblegum pink",
+  "#94a617":	"pea soup green",
+  "#a88905":	"dark mustard",
+  "#7f5f00":	"shit",
+  "#9e43a2":	"medium purple",
+  "#062e03":	"very dark green",
+  "#8a6e45":	"dirt",
+  "#cc7a8b":	"dusky pink",
+  "#9e0168":	"red violet",
+  "#fdff38":	"lemon yellow",
+  "#c0fa8b":	"pistachio",
+  "#eedc5b":	"dull yellow",
+  "#7ebd01":	"dark lime green",
+  "#3b5b92":	"denim blue",
+  "#01889f":	"teal blue",
+  "#3d7afd":	"lightish blue",
+  "#5f34e7":	"purpley blue",
+  "#6d5acf":	"light indigo",
+  "#748500":	"swamp green",
+  "#706c11":	"brown green",
+  "#3c0008":	"dark maroon",
+  "#cb00f5":	"hot purple",
+  "#002d04":	"dark forest green",
+  "#658cbb":	"faded blue",
+  "#749551":	"drab green",
+  "#b9ff66":	"light lime green",
+  "#9dc100":	"snot green",
+  "#faee66":	"yellowish",
+  "#7efbb3":	"light blue green",
+  "#7b002c":	"bordeaux",
+  "#c292a1":	"light mauve",
+  "#017b92":	"ocean",
+  "#fcc006":	"marigold",
+  "#657432":	"muddy green",
+  "#d8863b":	"dull orange",
+  "#738595":	"steel",
+  "#aa23ff":	"electric purple",
+  "#08ff08":	"fluorescent green",
+  "#9b7a01":	"yellowish brown",
+  "#f29e8e":	"blush",
+  "#6fc276":	"soft green",
+  "#ff5b00":	"bright orange",
+  "#fdff52":	"lemon",
+  "#866f85":	"purple grey",
+  "#8ffe09":	"acid green",
+  "#eecffe":	"pale lavender",
+  "#510ac9":	"violet blue",
+  "#4f9153":	"light forest green",
+  "#9f2305":	"burnt red",
+  "#728639":	"khaki green",
+  "#de0c62":	"cerise",
+  "#916e99":	"faded purple",
+  "#ffb16d":	"apricot",
+  "#3c4d03":	"dark olive green",
+  "#7f7053":	"grey brown",
+  "#77926f":	"green grey",
+  "#010fcc":	"true blue",
+  "#ceaefa":	"pale violet",
+  "#8f99fb":	"periwinkle blue",
+  "#c6fcff":	"light sky blue",
+  "#5539cc":	"blurple",
+  "#544e03":	"green brown",
+  "#017a79":	"bluegreen",
+  "#01f9c6":	"bright teal",
+  "#c9b003":	"brownish yellow",
+  "#929901":	"pea soup",
+  "#0b5509":	"forest",
+  "#a00498":	"barney purple",
+  "#2000b1":	"ultramarine",
+  "#94568c":	"purplish",
+  "#c2be0e":	"puke yellow",
+  "#748b97":	"bluish grey",
+  "#665fd1":	"dark periwinkle",
+  "#9c6da5":	"dark lilac",
+  "#c44240":	"reddish",
+  "#a24857":	"light maroon",
+  "#825f87":	"dusty purple",
+  "#c9643b":	"terra cotta",
+  "#90b134":	"avocado",
+  "#01386a":	"marine blue",
+  "#25a36f":	"teal green",
+  "#59656d":	"slate grey",
+  "#75fd63":	"lighter green",
+  "#21fc0d":	"electric green",
+  "#5a86ad":	"dusty blue",
+  "#fec615":	"golden yellow",
+  "#fffd01":	"bright yellow",
+  "#dfc5fe":	"light lavender",
+  "#b26400":	"umber",
+  "#7f5e00":	"poop",
+  "#de7e5d":	"dark peach",
+  "#048243":	"jungle green",
+  "#ffffd4":	"eggshell",
+  "#3b638c":	"denim",
+  "#b79400":	"yellow brown",
+  "#84597e":	"dull purple",
+  "#411900":	"chocolate brown",
+  "#7b0323":	"wine red",
+  "#04d9ff":	"neon blue",
+  "#667e2c":	"dirty green",
+  "#fbeeac":	"light tan",
+  "#d7fffe":	"ice blue",
+  "#4e7496":	"cadet blue",
+  "#874c62":	"dark mauve",
+  "#d5ffff":	"very light blue",
+  "#826d8c":	"grey purple",
+  "#ffbacd":	"pastel pink",
+  "#d1ffbd":	"very light green",
+  "#448ee4":	"dark sky blue",
+  "#05472a":	"evergreen",
+  "#d5869d":	"dull pink",
+  "#3d0734":	"aubergine",
+  "#4a0100":	"mahogany",
+  "#f8481c":	"reddish orange",
+  "#02590f":	"deep green",
+  "#89a203":	"vomit green",
+  "#e03fd8":	"purple pink",
+  "#d58a94":	"dusty pink",
+  "#7bb274":	"faded green",
+  "#526525":	"camo green",
+  "#c94cbe":	"pinky purple",
+  "#db4bda":	"pink purple",
+  "#9e3623":	"brownish red",
+  "#b5485d":	"dark rose",
+  "#735c12":	"mud",
+  "#9c6d57":	"brownish",
+  "#028f1e":	"emerald green",
+  "#b1916e":	"pale brown",
+  "#49759c":	"dull blue",
+  "#a0450e":	"burnt umber",
+  "#39ad48":	"medium green",
+  "#b66a50":	"clay",
+  "#8cffdb":	"light aqua",
+  "#a4be5c":	"light olive green",
+  "#cb7723":	"brownish orange",
+  "#05696b":	"dark aqua",
+  "#ce5dae":	"purplish pink",
+  "#c85a53":	"dark salmon",
+  "#96ae8d":	"greenish grey",
+  "#1fa774":	"jade",
+  "#7a9703":	"ugly green",
+  "#ac9362":	"dark beige",
+  "#01a049":	"emerald",
+  "#d9544d":	"pale red",
+  "#fa5ff7":	"light magenta",
+  "#82cafc":	"sky",
+  "#acfffc":	"light cyan",
+  "#fcb001":	"yellow orange",
+  "#910951":	"reddish purple",
+  "#fe2c54":	"reddish pink",
+  "#c875c4":	"orchid",
+  "#cdc50a":	"dirty yellow",
+  "#fd411e":	"orange red",
+  "#9a0200":	"deep red",
+  "#be6400":	"orange brown",
+  "#030aa7":	"cobalt blue",
+  "#fe019a":	"neon pink",
+  "#f7879a":	"rose pink",
+  "#887191":	"greyish purple",
+  "#b00149":	"raspberry",
+  "#12e193":	"aqua green",
+  "#fe7b7c":	"salmon pink",
+  "#ff9408":	"tangerine",
+  "#6a6e09":	"brownish green",
+  "#8b2e16":	"red brown",
+  "#696112":	"greenish brown",
+  "#e17701":	"pumpkin",
+  "#0a481e":	"pine green",
+  "#343837":	"charcoal",
+  "#ffb7ce":	"baby pink",
+  "#6a79f7":	"cornflower",
+  "#5d06e9":	"blue violet",
+  "#3d1c02":	"chocolate",
+  "#82a67d":	"greyish green",
+  "#be0119":	"scarlet",
+  "#c9ff27":	"green yellow",
+  "#373e02":	"dark olive",
+  "#a9561e":	"sienna",
+  "#caa0ff":	"pastel purple",
+  "#ca6641":	"terracotta",
+  "#02d8e9":	"aqua blue",
+  "#88b378":	"sage green",
+  "#980002":	"blood red",
+  "#cb0162":	"deep pink",
+  "#5cac2d":	"grass",
+  "#769958":	"moss",
+  "#a2bffe":	"pastel blue",
+  "#10a674":	"bluish green",
+  "#06b48b":	"green blue",
+  "#af884a":	"dark tan",
+  "#0b8b87":	"greenish blue",
+  "#ffa756":	"pale orange",
+  "#a2a415":	"vomit",
+  "#154406":	"forrest green",
+  "#856798":	"dark lavender",
+  "#34013f":	"dark violet",
+  "#632de9":	"purple blue",
+  "#0a888a":	"dark cyan",
+  "#6f7632":	"olive drab",
+  "#d46a7e":	"pinkish",
+  "#1e488f":	"cobalt",
+  "#bc13fe":	"neon purple",
+  "#7ef4cc":	"light turquoise",
+  "#76cd26":	"apple green",
+  "#74a662":	"dull green",
+  "#80013f":	"wine",
+  "#b1d1fc":	"powder blue",
+  "#ffffe4":	"off white",
+  "#0652ff":	"electric blue",
+  "#045c5a":	"dark turquoise",
+  "#5729ce":	"blue purple",
+  "#069af3":	"azure",
+  "#ff000d":	"bright red",
+  "#f10c45":	"pinkish red",
+  "#5170d7":	"cornflower blue",
+  "#acbf69":	"light olive",
+  "#6c3461":	"grape",
+  "#5e819d":	"greyish blue",
+  "#601ef9":	"purplish blue",
+  "#b0dd16":	"yellowish green",
+  "#cdfd02":	"greenish yellow",
+  "#2c6fbb":	"medium blue",
+  "#c0737a":	"dusty rose",
+  "#d6b4fc":	"light violet",
+  "#020035":	"midnight blue",
+  "#703be7":	"bluish purple",
+  "#fd3c06":	"red orange",
+  "#960056":	"dark magenta",
+  "#40a368":	"greenish",
+  "#03719c":	"ocean blue",
+  "#fc5a50":	"coral",
+  "#ffffc2":	"cream",
+  "#7f2b0a":	"reddish brown",
+  "#b04e0f":	"burnt sienna",
+  "#a03623":	"brick",
+  "#87ae73":	"sage",
+  "#789b73":	"grey green",
+  "#ffffff":	"white",
+  "#98eff9":	"robin's egg blue",
+  "#658b38":	"moss green",
+  "#5a7d9a":	"steel blue",
+  "#380835":	"eggplant",
+  "#fffe7a":	"light yellow",
+  "#5ca904":	"leaf green",
+  "#d8dcd6":	"light grey",
+  "#a5a502":	"puke",
+  "#d648d7":	"pinkish purple",
+  "#047495":	"sea blue",
+  "#b790d4":	"pale purple",
+  "#5b7c99":	"slate blue",
+  "#607c8e":	"blue grey",
+  "#0b4008":	"hunter green",
+  "#ed0dd9":	"fuchsia",
+  "#8c000f":	"crimson",
+  "#ffff84":	"pale yellow",
+  "#bf9005":	"ochre",
+  "#d2bd0a":	"mustard yellow",
+  "#ff474c":	"light red",
+  "#0485d1":	"cerulean",
+  "#ffcfdc":	"pale pink",
+  "#040273":	"deep blue",
+  "#a83c09":	"rust",
+  "#90e4c1":	"light teal",
+  "#516572":	"slate",
+  "#fac205":	"goldenrod",
+  "#d5b60a":	"dark yellow",
+  "#363737":	"dark grey",
+  "#4b5d16":	"army green",
+  "#6b8ba4":	"grey blue",
+  "#80f9ad":	"seafoam",
+  "#a57e52":	"puce",
+  "#a9f971":	"spring green",
+  "#c65102":	"dark orange",
+  "#e2ca76":	"sand",
+  "#b0ff9d":	"pastel green",
+  "#9ffeb0":	"mint",
+  "#fdaa48":	"light orange",
+  "#fe01b1":	"bright pink",
+  "#c1f80a":	"chartreuse",
+  "#36013f":	"deep purple",
+  "#341c02":	"dark brown",
+  "#b9a281":	"taupe",
+  "#8eab12":	"pea green",
+  "#9aae07":	"puke green",
+  "#02ab2e":	"kelly green",
+  "#7af9ab":	"seafoam green",
+  "#137e6d":	"blue green",
+  "#aaa662":	"khaki",
+  "#610023":	"burgundy",
+  "#014d4e":	"dark teal",
+  "#8f1402":	"brick red",
+  "#4b006e":	"royal purple",
+  "#580f41":	"plum",
+  "#8fff9f":	"mint green",
+  "#dbb40c":	"gold",
+  "#a2cffe":	"baby blue",
+  "#c0fb2d":	"yellow green",
+  "#be03fd":	"bright purple",
+  "#840000":	"dark red",
+  "#d0fefe":	"pale blue",
+  "#3f9b0b":	"grass green",
+  "#01153e":	"navy",
+  "#04d8b2":	"aquamarine",
+  "#c04e01":	"burnt orange",
+  "#0cff0c":	"neon green",
+  "#0165fc":	"bright blue",
+  "#cf6275":	"rose",
+  "#ffd1df":	"light pink",
+  "#ceb301":	"mustard",
+  "#380282":	"indigo",
+  "#aaff32":	"lime",
+  "#53fca1":	"sea green",
+  "#8e82fe":	"periwinkle",
+  "#cb416b":	"dark pink",
+  "#677a04":	"olive green",
+  "#ffb07c":	"peach",
+  "#c7fdb5":	"pale green",
+  "#ad8150":	"light brown",
+  "#ff028d":	"hot pink",
+  "#000000":	"black",
+  "#cea2fd":	"lilac",
+  "#001146":	"navy blue",
+  "#0504aa":	"royal blue",
+  "#e6daa6":	"beige",
+  "#ff796c":	"salmon",
+  "#6e750e":	"olive",
+  "#650021":	"maroon",
+  "#01ff07":	"bright green",
+  "#35063e":	"dark purple",
+  "#ae7181":	"mauve",
+  "#06470c":	"forest green",
+  "#13eac9":	"aqua",
+  "#00ffff":	"cyan",
+  "#d1b26f":	"tan",
+  "#00035b":	"dark blue",
+  "#c79fef":	"lavender",
+  "#06c2ac":	"turquoise",
+  "#033500":	"dark green",
+  "#9a0eea":	"violet",
+  "#bf77f6":	"light purple",
+  "#89fe05":	"lime green",
+  "#929591":	"grey",
+  "#75bbfd":	"sky blue",
+  "#ffff14":	"yellow",
+  "#c20078":	"magenta",
+  "#96f97b":	"light green",
+  "#f97306":	"orange",
+  "#029386":	"teal",
+  "#95d0fc":	"light blue",
+  "#e50000":	"red",
+  "#653700":	"brown",
+  "#ff81c0":	"pink",
+  "#0343df":	"blue",
+  "#15b01a":	"green",
+  "#7e1e9c":	"purple",
+};
+        colornamesLuvIndex = null;
+        updateColorNames();
+    </script>
+</body>
+</html>
