@@ -194,20 +194,6 @@ _Note: [htmlcolorcodes](https://htmlcolorcodes.com/fr/rgb-a-hex/?r=231&g=85&b=24
 # 2024 edits
 
 Previous palette, reverse engineered:
-```
- 199 255 255 | 192.2 100.0%  96.4%  | #c7ffff | light sky blue
- 104 255 255 | 192.2 100.0%  92.4%  | #68ffff | bright cyan
-  26 216 223 | 197.6  98.2%  78.8%  | #1ad8df | aqua blue
- 255 248  26 |  83.2 100.0%  95.4%  | #fff81a | sunny yellow
- 255 194  66 |  56.5 100.0%  82.0%  | #ffc242 | golden rod
- 254 128  26 |  29.5  98.4%  67.0%  | #fe801a | pumpkin orange
- 241  26  33 |  11.8  94.2%  51.3%  | #f11a21 | red
- 235  84 255 | 300.7 100.0%  62.7%  | #eb54ff | heliotrope
- 111  53 255 | 271.2 100.0%  43.0%  | #6f35ff | purplish blue
- 103  49 236 | 271.3  91.0%  39.8%  | #6731ec | purple blue
-  26  26 255 | 265.9 100.0%  34.4%  | #1a1aff | rich blue
- 111 111 111 |   0.0   0.0%  46.8%  | #6f6f6f | medium grey
-```
 but the code says I used eslo13near, which is:
 ```
 17 |  255 255 255 |   0.0   0.0% 100.0%  | #ffffff | white
@@ -249,63 +235,68 @@ Goals for the new palette
 
 "30" should be made *much* lighter and yellower to be less scary, as avalanches are quite unlikely at this point ; to be make the 33 class standout
 
-29-31°  30 |  240  225    0 |     80    88  | #f0e100  titanium yellow
-
-80/88 → 88/97.5 #fbff86
-
 33 - 36 - 39 should also start a bit lighter to space them out better as this is the most frequent ski terrain.
 
 45 can be lighter as well, as it's already quite distinct from 42, to better differentiate it from 45
 
-22       170 255 255
-27        86 245 245
-30       240 225   0
-33       245 191   0
-36       255 155   0
-39       255 105   0
-42       255   0   0
-45       220   0 245
-48       167  25 255
-51       110   0 255
-56         0   0 255
-65        77  77  77
-nv         0   0   0
-
-# 2026 edits
-
-2024 was 3 blue, 3 orange , red, 4 purple, grey
+still 3 blue, 3 orange , red, 4 purple, grey
 
 ## eslo13bnear
 
-eslo13b near is the one from 2024, let's see it
+eslo13b near is the one from 2024, this is parsed from mbtiles :
+```css
+ 0-19°  17 |  255 255 255 |   0.0   0.0% 100.0%  | #ffffff | white
+20-24°  22 |  192 255 255 | 192.2 100.0%  96.0%  | #c0ffff | light sky blue
+25-28°  27 |   87 255 255 | 192.2 100.0%  92.0%  | #57ffff | bright cyan
+29-31°  30 |    0 211 219 | 198.4 100.0%  77.1%  | #00d3db | aqua blue
+32-34°  33 |  255 247   0 |  82.9 100.0%  95.1%  | #fff700 | sunny yellow
+35-37°  36 |  255 187  45 |  54.0 100.0%  80.2%  | #ffbb2d | orangey yellow
+38-40°  39 |  253 113   0 |  25.9 100.0%  63.9%  | #fd7100 | orange
+41-43°  42 |  239   0   8 |  12.0 100.0%  49.9%  | #ef0008 | cherry red
+44-46°  45 |  232  64 255 | 300.0 100.0%  59.9%  | #e840ff | heliotrope
+47-49°  48 |  162  63 255 | 279.9 100.0%  50.0%  | #a23fff | electric purple
+50-53°  51 |   94  30 255 | 270.0 100.0%  38.8%  | #5e1eff | purplish blue
+54-57°  56 |    0   0 255 | 265.9 100.0%  32.3%  | #0000ff | rich blue
+58-64°  65 |   94  94  94 |   0.0   0.0%  39.9%  | #a9a9a9ff | gunmetal
+65-90°  nv |    0   0   0 |   0.0   0.0%   0.0%  | #000000 | black
+```
+# 2026 edits
+
+With tweaks:
+```css
+ 0-19°  16 |  255 255 255 |   0.0   0.0% 100.0%  | #ffffff | white
+20-24°  21 |  192 255 255 | 192.2 100.0%  96.0%  | #c0ffff | light sky blue
+24-27°  26 |   87 255 255 | 192.2 100.0%  92.0%  | #57ffff | bright cyan
+28-30°  29 |    0 211 219 | 198.4 100.0%  77.1%  | #00d3db | aqua blue
+31-33°  32 |  255 250  50 |  84.0 100.0%  95.9%  | #fffa32 | sunshine yellow
+34-36°  35 |  255 194  86 |  54.8 100.0%  82.1%  | #ffc256 | macaroni and cheese
+37-39°  38 |  253 113   0 |  25.9 100.0%  63.9%  | #fd7100 | orange
+40-42°  41 |  239   0   8 |  12.0 100.0%  49.9%  | #ef0008 | cherry red
+43-45°  44 |  233  88 255 | 299.9 100.0%  62.9%  | #e958ff | heliotrope
+46-48°  47 |  166  80 255 | 279.9 100.0%  53.0%  | #a650ff | lighter purple
+49-53°  51 |   94  30 255 | 270.0 100.0%  38.8%  | #5e1eff | purplish blue
+54-58°  56 |    0   0 255 | 265.9 100.0%  32.3%  | #0000ff | rich blue
+59-64°  65 |  145 145 145 |   0.0   0.0%  60.2%  | #919191 | grey
+65-90°  nv |    0   0   0 |   0.0   0.0%   0.0%  | #000000 | black
+```
 
 ```py
-slope  nearest| R    G    B |      H     L  | HTML     color
- 0-19°  17 |  255  255  255 |      0   100  | #ffffff  white
-20-24°  22 |  192  255  255 | x   192    95  | #aaffff  pale turquoise / celeste
-25-28°  27 |   87  255  255 | x   192    92  | #56ffff  cyan
-29-31°  30 |    0  211  219 |     90    97  | #00D3DB  titanium yellow before 80 88
-32-34°  33 |   255 247    0 |     65    87  | #f5bf00  golden poppy   befor 61 80
-35-37°  36 |  255  155    0 |     45    76  | #ff9b00  orange peel  was 40.3  72.7
-38-40°  39 |  255  105    0 |     24    65  | #ff6900  dark orange 2 was 24    63
-41-43°  42 |  255    0    0 |     12    53  | #ff0000  red
-44-46°  45 |  220    0  245 |    300    60  | #dc00f5  magenta 2  299.5  53.8
-47-49°  48 |  167   25  255 |    280    50  | #a719ff  purple    282    47
-50-53°  51 |  110    0  255 |    270    39  | #6e00ff  electric indigo / violet    272    39
-54-57°  54 |   65    6  255 |    268    35  | #4106ff  blue1
-58-64°  59 |    0    0  255 |    266    32  | #0000ff  blue
-65-90°  68 |   89   89   89 |      0    38  | #595959  gray 30
+ [
+ #ffffff,
+20, #c0ffff,
+24, #57ffff,
+28, #00d3db,
+31, #fffa32,
+34, #ffc256,
+37, #fd7100,
+40, #ef0008,
+43, #e958ff,
+46, #a650ff,
+49, #5e1eff,
+54, #0000ff,
+59, #919191,
+ ]
 ```
-33 |       255 247   0
-36 |       255 187  45
-39 |       253 113   0
-42 |       239   0   8
-45 |       232  64 255
-48 |       162  63 255
-51 |        94  30 255
-56 |         0   0 255
-65 |        94  94  94
-nv |         0   0   0
 
 
 ## eslo4near adjustment towards steeper slopes
