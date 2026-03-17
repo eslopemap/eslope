@@ -243,7 +243,7 @@ still 3 blue, 3 orange , red, 4 purple, grey
 
 ## eslo13bnear
 
-eslo13b near is the one from 2024, this is parsed from mbtiles :
+eslo13b near is the one from 2024, this is parsed from mbtiles (in norway.ipynb) :
 ```css
  0-19°  17 |  255 255 255 |   0.0   0.0% 100.0%  | #ffffff | white
 20-24°  22 |  192 255 255 | 192.2 100.0%  96.0%  | #c0ffff | light sky blue
@@ -260,24 +260,25 @@ eslo13b near is the one from 2024, this is parsed from mbtiles :
 58-64°  65 |   94  94  94 |   0.0   0.0%  39.9%  | #a9a9a9ff | gunmetal
 65-90°  nv |    0   0   0 |   0.0   0.0%   0.0%  | #000000 | black
 ```
-# 2026 edits
+# 2026 edits: eslo13cnear
 
 With tweaks:
 ```css
+slope nearest| R    G   B |     H      S      L  |   HTML    | color
  0-19°  16 |  255 255 255 |   0.0   0.0% 100.0%  | #ffffff | white
-20-24°  21 |  192 255 255 | 192.2 100.0%  96.0%  | #c0ffff | light sky blue
+19-23°  21 |  192 255 255 | 192.2 100.0%  96.0%  | #c0ffff | light sky blue
 24-27°  26 |   87 255 255 | 192.2 100.0%  92.0%  | #57ffff | bright cyan
 28-30°  29 |    0 211 219 | 198.4 100.0%  77.1%  | #00d3db | aqua blue
 31-33°  32 |  255 250  50 |  84.0 100.0%  95.9%  | #fffa32 | sunshine yellow
 34-36°  35 |  255 194  86 |  54.8 100.0%  82.1%  | #ffc256 | macaroni and cheese
 37-39°  38 |  253 113   0 |  25.9 100.0%  63.9%  | #fd7100 | orange
-40-42°  41 |  239   0   8 |  12.0 100.0%  49.9%  | #ef0008 | cherry red
-43-45°  44 |  233  88 255 | 299.9 100.0%  62.9%  | #e958ff | heliotrope
-46-48°  47 |  166  80 255 | 279.9 100.0%  53.0%  | #a650ff | lighter purple
-49-53°  51 |   94  30 255 | 270.0 100.0%  38.8%  | #5e1eff | purplish blue
-54-58°  56 |    0   0 255 | 265.9 100.0%  32.3%  | #0000ff | rich blue
-59-64°  65 |  145 145 145 |   0.0   0.0%  60.2%  | #919191 | grey
-65-90°  nv |    0   0   0 |   0.0   0.0%   0.0%  | #000000 | black
+40-42°  41 |  256   0   0 |   0   100.0%  50.0%  | #ff0000 | fire red
+43-46°  44 |  233  88 255 | 299.9 100.0%  62.9%  | #e958ff | heliotrope
+47-51°  49 |  166  80 255 | 279.9 100.0%  53.0%  | #a650ff | lighter purple
+52-56°  54 |   94  30 255 | 270.0 100.0%  38.8%  | #5e1eff | purplish blue
+57-63°  59 |    0   0 255 | 265.9 100.0%  32.3%  | #0000ff | rich blue
+64-90°  68 |  170 170 170 |   0.0   0.0%  69.6%  | #aaaaaa | cool grey
+noval   nv |    0   0   0 |   0.0   0.0%   0.0%  | #000000 | black
 ```
 
 ```py
@@ -291,10 +292,10 @@ With tweaks:
 37, #fd7100,
 40, #ef0008,
 43, #e958ff,
-46, #a650ff,
-49, #5e1eff,
-54, #0000ff,
-59, #919191,
+47, #a650ff,
+52, #5e1eff,
+57, #0000ff,
+62, #aaaaaa,
  ]
 ```
 

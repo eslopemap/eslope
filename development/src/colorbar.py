@@ -33,10 +33,16 @@ def clr_to_srgb(clr_path):
         for line in f:
             # nv is "no data" value, usually transparent
             if line.startswith('nv'): continue
-            elems = [float(elem) for elem in line.strip().split()]
-            if len(elems) < 5:  # transparency: opaque by default
-                elems.append(1)
-            slope, r, g, b, a = elems
+            parts = line.strip().split()
+            slope = float(parts[0])
+            if parts[1].startswith('#'):
+                hex_color = parts[1].lstrip('#')
+                r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+            else:
+                elems = [float(p) for p in parts[1:]]
+                if len(elems) < 4:  # transparency: opaque by default
+                    elems.append(1)
+                r, g, b = elems[0], elems[1], elems[2]
             yield slope, r/255, g/255, b/255
 
 # color = Type[Union[float, int]]
@@ -61,7 +67,7 @@ def srgb_to_mpl_palette_nearest(palette: Iterable[Tuple[float, float, float, flo
 
 
 def srgb_to_mpl_palette_interp(palette: Iterable[Tuple[float, float, float, float]]):
-    '''Interpolate an srgb palette into a matplotlib gradient, 
+    '''Interpolate an srgb palette into a matplotlib gradient,
        to imitate gdal color-relief default'''
     cdict = {'red': [], 'green': [], 'blue': []}
     slope = 0
@@ -92,6 +98,8 @@ def plot_mpl_palette(name, cdict, is_nearest):
 
     dpi = 10  # values per degree
     dpiseg = 10 if is_nearest else 2
+    offset = 0.4 if is_nearest else 0
+    xlim = 70
     themap = LinearSegmentedColormap(name, segmentdata=cdict, N=Ndegrees*dpiseg)
 
     gradient = np.linspace(0, 1,  Ndegrees*dpi+1)
@@ -102,16 +110,22 @@ def plot_mpl_palette(name, cdict, is_nearest):
     ax.imshow(gradient, aspect='auto', cmap=themap)
     ax.set_title(name, fontsize=14)
     ax.set_yticks([])
-    ticklabels = [0,10,20,30,35,40,45,50,55,60]
-    ax.set_xticks([(t + 0.5) * dpi for t in ticklabels])
-    ax.set_xticklabels(ticklabels)
-    ax.set_xlim([0,61*dpi])
+    ticklabels = [0,10,20,30,35,40,45,50,55,60,65,70]
+    ax.set_xticks([(t + offset) * dpi for t in ticklabels])
+    ax.set_xticklabels(ticklabels[:-1] + ['90°'])
+    ax.set_xlim([0,(xlim+offset)*dpi])
     return fig
 
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        print(sys.argv[0], '<-n/-c> <name>'); sys.exit(1)
+        print("Usage: {} <-n|-c> <name>".format(sys.argv[0]))
+        print("  Plot a slope .clr palette as a colorbar image.")
+        print("  -n  nearest-color mode (like gdal -nearest_color_entry)")
+        print("  -c  interpolated mode (like gdal color-relief default)")
+        print("  <name>  palette name, reads gdaldem-slope-<name>.clr from ../data/")
+        print("  Output: colormap-<name>.png in current directory")
+        sys.exit(1)
     _, mode, name = sys.argv
     is_nearest = sys.argv[1] == '-n'
     src = 'gdaldem-slope-{}.clr'.format(name)

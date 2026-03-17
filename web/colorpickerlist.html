@@ -299,6 +299,7 @@
         <h1>Color Picker List</h1>
 
         <div class="controls">
+            <input id="paletteName" type="text" placeholder="Palette name" style="min-width: 260px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px;" oninput="setPaletteNameFromInput(this.value)">
             <button onclick="addColor()">Add Color</button>
             <button onclick="importColors()" class="secondary">Import Colors</button>
             <button onclick="exportColors()" class="secondary">Export Colors</button>
@@ -867,6 +868,8 @@
 
         let colors = [];
         let selectedColorIndex = -1;
+        let paletteName = '';
+        let lastImportedFilename = '';
         let dragState = null;
 
         const SESSION_STORAGE_KEY = 'colorpickerlist.state.v1';
@@ -899,7 +902,8 @@
                 const snapshot = {
                     version: 1,
                     colors,
-                    selectedColorIndex
+                    selectedColorIndex,
+                    paletteName
                 };
                 sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(snapshot));
             } catch (e) {
@@ -926,6 +930,10 @@
                         selectedColorIndex = 0;
                     }
                 }
+
+                paletteName = (typeof parsed.paletteName === 'string') ? parsed.paletteName : '';
+                const nameEl = document.getElementById('paletteName');
+                if (nameEl) nameEl.value = paletteName;
 
                 renderColorList();
                 updateColorNames();
@@ -1181,6 +1189,18 @@
             document.getElementById('fileName').textContent = '';
             const clearEl = document.getElementById('import_clear_existing');
             if (clearEl) clearEl.checked = true;
+            lastImportedFilename = '';
+        }
+
+        function setPaletteNameFromInput(value) {
+            paletteName = String(value || '');
+            scheduleSaveState();
+        }
+
+        function stripFilenameExtension(filename) {
+            const s = String(filename || '');
+            const idx = s.lastIndexOf('.');
+            return idx > 0 ? s.slice(0, idx) : s;
         }
 
         function loadFile(event) {
@@ -1188,6 +1208,7 @@
             if (!file) return;
 
             document.getElementById('fileName').textContent = file.name;
+            lastImportedFilename = file.name;
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -1206,10 +1227,17 @@
             const clearExisting = !!document.getElementById('import_clear_existing')?.checked;
             const imported = [];
 
-            const lines = input.split('\n').filter(l => l.trim());
-            lines.forEach(line => {
+            let nameFromImport = null;
+
+            const lines = input.split('\n');
+            lines.forEach((line, idx) => {
                 line = line.trim();
                 if (!line) return;
+
+                if (nameFromImport === null && line.startsWith('//')) {
+                    nameFromImport = line.slice(2).trim();
+                    return;
+                }
 
                 let metadata = '';
                 let colorPart = line;
@@ -1259,6 +1287,18 @@
                 if (colors.length && (selectedColorIndex < 0 || selectedColorIndex >= colors.length)) {
                     selectedColorIndex = 0;
                 }
+            }
+
+            if (nameFromImport !== null) {
+                let finalName = nameFromImport;
+                if (!finalName && lastImportedFilename) finalName = stripFilenameExtension(lastImportedFilename);
+                paletteName = String(finalName || '');
+                const nameEl = document.getElementById('paletteName');
+                if (nameEl) nameEl.value = paletteName;
+            } else if (clearExisting && lastImportedFilename) {
+                paletteName = stripFilenameExtension(lastImportedFilename);
+                const nameEl = document.getElementById('paletteName');
+                if (nameEl) nameEl.value = paletteName;
             }
 
             onColorsChanged();
@@ -1321,7 +1361,8 @@
         function buildExportText() {
             const flags = getExportFlags();
             const sep = getExportSeparator();
-            return colors.map(color => {
+            const headerName = String(paletteName || '').trim();
+            const body = colors.map(color => {
                 const [r, g, b] = color.rgb;
                 const parts = [];
 
@@ -1353,6 +1394,11 @@
 
                 return parts.join(sep);
             }).join('\n');
+
+            if (headerName) {
+                return body ? `// ${headerName}\n${body}` : `// ${headerName}`;
+            }
+            return body;
         }
 
         function updateExportPreview() {

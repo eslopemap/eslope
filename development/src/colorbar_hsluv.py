@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+Generate slope color palettes using HSLuv perceptual color space interpolation,
+and export them as GDAL-compatible .clr files.
+
+Written: December 2021
+"""
+
 import sys
 from typing import List, Tuple, Union
 # import numpy as np
