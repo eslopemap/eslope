@@ -44,8 +44,9 @@ def mbt_info(mbt_or_cur: DB):
     with cursor(mbt_or_cur) as c:
         res = c.execute("SELECT 'zoom =', MIN(zoom_level), MAX(zoom_level), '; n =', COUNT(*) "
                         "FROM tiles ;").fetchall()
-        if isinstance(mbt_or_cur, str):
-            res.append(('*', round(os.path.getsize(mbt_or_cur) / res[0][4] / 1024), 'kb/tile'))
+        ntiles = res[0][4]
+        if ntiles and isinstance(mbt_or_cur, str):
+            res.append(('*', round(os.path.getsize(mbt_or_cur) / ntiles / 1024), 'kb/tile'))
         try:
             import io, PIL.Image
             from src.jpg_quality_pil_magick import get_jpg_quality
@@ -313,7 +314,7 @@ def mbt_merge(source, *more_sources:str, dest:str,
     try:
         create_index(dbc)
         meta = dict(dbc.execute('SELECT * FROM metadata').fetchall())
-        descm = f"Merge of the following files:\n* {meta['name']} : {meta.get('description', '')}\n"
+        descm = f"Merge of the following files:\n* {meta.get('name', '')} : {meta.get('description', '')}\n"
 
         mbtcut = os.path.join(tempfile.gettempdir(), 'tmp.mbtiles')
         for source in more_sources:
@@ -417,11 +418,12 @@ def update_mbt_meta(sqlite_or_path, name=None, desc=None, attrib=None,
         for k, v in args.items():
             if k not in meta and bool(v):
                 meta[k] = v
-        on_conflict = 'DO UPDATE SET value=excluded.value' if overwrite else 'DO NOTHING'
         log('Meta update', pformat(meta))
-        dbc.executemany(
-            f'INSERT INTO {dbn}.metadata (name, value) VALUES (?, ?) ON CONFLICT (name) {on_conflict}',
-            meta.items())
+        if meta:
+            on_conflict = 'DO UPDATE SET value=excluded.value' if overwrite else 'DO NOTHING'
+            dbc.executemany(
+                f'INSERT INTO {dbn}.metadata (name, value) VALUES (?, ?) ON CONFLICT (name) {on_conflict}',
+                meta.items())
     # `format` is mandatory in 1.1+
     # `bounds` is optional but mandated by pmtiles
     # `center` is optional but mandated by pmtiles
