@@ -2,19 +2,22 @@
 """Standalone script (and importable module) for mapterhorn2eslo.
 
 Usage from terminal (with live progress):
-    cd /home/eoubrayrie/mapproj/eslope/development
+    cd development
     mamba activate -n maps
-    python run_mapterhorn2eslo.py nolofotennz10 --locname 'Lofoten (Norway)' --reuse
+    python src/mapterhorn2eslo.py nolofotennz10 --locname 'Lofoten (Norway)' --reuse
 
 Usage from Jupyter:
-    from run_mapterhorn2eslo import mapterhorn2eslo, trr2tif
+    from src.mapterhorn2eslo import mapterhorn2eslo, trr2tif
     mapterhorn2eslo('nolofotennz10', locname='Lofoten (Norway)', reuse=True)
 
-Initial download:
+Minimal pipeline:
 ```
-! wget https://download.mapterhorn.com/6-34-15.pmtiles -O data/dtm_local/noz6lofoten_trr.pmtiles
-! wget https://download.mapterhorn.com/6-35-14.pmtiles -O data/dtm_local/noz6lyngen_trr.pmtiles
+wget https://download.mapterhorn.com/6-34-15.pmtiles -O data/dtm_local/<location>_trr.pmtiles
+pmtiles-convert data/dtm_local/<location>_trr.{pmtiles,mbtiles}
+python src/mapterhorn2eslo.py <location> --locname '<Location Name>' --reuse
 ```
+A full tile like this can take 10 hours to process and use 50+GB of disk space.
+All intermediate files are kept, stored in the `data/` directory.
 """
 
 import argparse
@@ -52,7 +55,9 @@ from src import gdal_slope_util as S, mbt_util as M
 # ---------------------------------------------------------------------------
 
 def trr2tif(src, dest='', reuse=False):
-    """Convert Terrarrium Terrain RGB MBTiles to GeoTIFF."""
+    """Convert Terrarrium Terrain RGB MBTiles to GeoTIFF.
+    This can takes ~2 minutes per GB and increase output file size by 30%.
+    """
     assert dest or src.endswith('trr.mbtiles')
     dest = dest or src.replace('trr.mbtiles', 'dtm.tif')
     if reuse and os.path.exists(dest):
@@ -83,7 +88,7 @@ def mapterhorn2eslo(location, locname='', reuse=True):
     # f3utm no longer needed
     f4slo = f'data/slope_local/{location}_slopes.tif'
     f5zsl = f'data/slope_local/{location}_sz16.tif'
-    f6mbt = f'data/eslo_{location}.mbtiles'
+    f6mbt = f'data/mbtiles/eslo/eslo_{location}.mbtiles'
     if reuse and os.path.exists(f5zsl):
         print('Reuse', f5zsl)
     else:
