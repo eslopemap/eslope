@@ -1,0 +1,208 @@
+mamba activate maps ; python /home/$USER/mapproj/eslope/development/norway.py nolofotennz10  --locname 'Lofoten (Norway)'  --reuse
+
+
+============================================================
+  Processing: nolofotennz10  (Lofoten (Norway))
+============================================================
+
+-rw-r--r-- 1 $USER $USER 7,3G mars  18 00:40 data/dtm_local/nolofotennz10_trr.mbtiles
+Reuse data/dtm_local/nolofotennz10_dtm.tif
+-rw-rw-r-- 1 $USER $USER 14G mars  18 01:11 data/dtm_local/nolofotennz10_dtm.tif
+/home/$USER/software/python/mamba/envs/maps/lib/python3.14/site-packages/osgeo/gdal.py:606: FutureWarning: Neither gdal.UseExceptions() nor gdal.DontUseExceptions() has been explicitly called. In GDAL 4.0, exceptions will be enabled by default.
+  warnings.warn(
+Center latitude: 68.46°, -s scale factor: 0.3671
+gdaldem slope --config GDAL_CACHEMAX 2048 --config GDAL_ENABLE_READ_WRITE_MUTEX NO  'data/dtm_local/nolofotennz10_dtm.tif' -co COMPRESS=ZSTD -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS  'data/slope_local/nolofotennz10_slopes.tif' -s 0.3670890071251413
+0...10...20...30...40...50...60...70...80...90...100 - done in 01:08:43.
+-rw-rw-r-- 1 $USER $USER 36G mars  18 02:32 data/slope_local/nolofotennz10_slopes.tif
+      gdalwarp -ot Byte \
+        -co COMPRESS=ZSTD -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite  \
+        -t_srs EPSG:3857 -tr 2.388657133911758 -2.388657133911758 -r nearest \
+          -dstnodata 255  \
+        data/slope_local/nolofotennz10_slopes.tif data/slope_local/nolofotennz10_sz16.tif
+Creating output file that is 294912P x 147456L.
+Using internal nodata values (e.g. -9999) for image data/slope_local/nolofotennz10_slopes.tif.
+Processing nolofotennz10_slopes.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:07:20.
+      gdalwarp -r q3 -tr 9.554628535647032 -9.554628535647032 \
+        -co COMPRESS=ZSTD -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolofotennz10_sz16.tif data/slope_local/nolofotennz10_sz14.tif
+Creating output file that is 73728P x 36864L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolofotennz10_sz16.tif.
+Copying nodata values from source data/slope_local/nolofotennz10_sz16.tif to destination data/slope_local/nolofotennz10_sz14.tif.
+Processing nolofotennz10_sz16.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:03:34.
+      gdalwarp -r q3 -tr 38.21851414258813 -38.21851414258813 \
+        -co COMPRESS=ZSTD -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolofotennz10_sz14.tif data/slope_local/nolofotennz10_sz12.tif
+Creating output file that is 18432P x 9216L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolofotennz10_sz14.tif.
+Copying nodata values from source data/slope_local/nolofotennz10_sz14.tif to destination data/slope_local/nolofotennz10_sz12.tif.
+Processing nolofotennz10_sz14.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:13.
+      gdalwarp -r bilinear -tr 4.777314267823516 -4.777314267823516 \
+        -co COMPRESS=ZSTD -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolofotennz10_sz14.tif data/slope_local/nolofotennz10_sz14_up_z15.tif
+Creating output file that is 147456P x 73728L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolofotennz10_sz14.tif.
+Copying nodata values from source data/slope_local/nolofotennz10_sz14.tif to destination data/slope_local/nolofotennz10_sz14_up_z15.tif.
+Processing nolofotennz10_sz14.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:02:05.
+      gdalwarp -r bilinear -tr 9.554628535647032 -9.554628535647032 \
+        -co COMPRESS=ZSTD -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolofotennz10_sz12.tif data/slope_local/nolofotennz10_sz12_up_z14.tif
+Creating output file that is 73728P x 36864L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolofotennz10_sz12.tif.
+Copying nodata values from source data/slope_local/nolofotennz10_sz12.tif to destination data/slope_local/nolofotennz10_sz12_up_z14.tif.
+Processing nolofotennz10_sz12.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:31.
+      gdalwarp -r bilinear -tr 19.10925707129406 -19.10925707129406 \
+        -co COMPRESS=ZSTD -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolofotennz10_sz12.tif data/slope_local/nolofotennz10_sz12_up_z13.tif
+Creating output file that is 36864P x 18432L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolofotennz10_sz12.tif.
+Copying nodata values from source data/slope_local/nolofotennz10_sz12.tif to destination data/slope_local/nolofotennz10_sz12_up_z13.tif.
+Processing nolofotennz10_sz12.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:08.
+sed -e 's/nv \+0 \+0 \+0/nv  255 255 255/g' -e 's/nv \+#000000/nv #FFFFFF/g' '/home/$USER/mapproj/eslope/development/data/gdaldem-slope-eslo13cnear.clr'
+\
+      gdaldem color-relief data/slope_local/nolofotennz10_sz16.tif /tmp/gdaldem-slope-eslo13cnear.clr data/slope_local/nolofotennz10_sz16-eslo13cnear-z16.mbtiles \
+          -nearest_color_entry -co TILE_FORMAT=png8
+0...10...20...30...40...50...60...70...80...90...100 - done in 00:26:50.
+Step 1/4 completed in 1620.2 seconds
+sed -e 's/nv \+0 \+0 \+0/nv  255 255 255/g' -e 's/nv \+#000000/nv #FFFFFF/g' '/home/$USER/mapproj/eslope/development/data/gdaldem-slope-eslo13cnear.clr'
+\
+      gdaldem color-relief data/slope_local/nolofotennz10_sz14_up_z15.tif /tmp/gdaldem-slope-eslo13cnear.clr data/slope_local/nolofotennz10_sz14_up_z15-eslo13cnear-z15.mbtiles \
+          -nearest_color_entry -co TILE_FORMAT=png8
+0...10...20...30...40...50...60...70...80...90...100 - done in 00:06:24.
+Step 2/4 completed in 395.0 seconds
+sed -e 's/nv \+0 \+0 \+0/nv  255 255 255/g' -e 's/nv \+#000000/nv #FFFFFF/g' '/home/$USER/mapproj/eslope/development/data/gdaldem-slope-eslo4near.clr'
+\
+      gdaldem color-relief data/slope_local/nolofotennz10_sz12_up_z14.tif /tmp/gdaldem-slope-eslo4near.clr data/slope_local/nolofotennz10_sz12_up_z14-eslo4near-z14.mbtiles \
+          -nearest_color_entry -co TILE_FORMAT=png8
+0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:52.
+Step 3/4 completed in 56.1 seconds
+sed -e 's/nv \+0 \+0 \+0/nv  255 255 255/g' -e 's/nv \+#000000/nv #FFFFFF/g' '/home/$USER/mapproj/eslope/development/data/gdaldem-slope-eslo4near.clr'
+\
+      gdaldem color-relief data/slope_local/nolofotennz10_sz12_up_z13.tif /tmp/gdaldem-slope-eslo4near.clr data/slope_local/nolofotennz10_sz12_up_z13-eslo4near-z13.mbtiles \
+          -nearest_color_entry -co TILE_FORMAT=png8
+0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:14.
+Step 4/4 completed in 19.2 seconds
+cp data/slope_local/nolofotennz10_sz16-eslo13cnear-z16.mbtiles data/eslo_nolofotennz10.mbtiles
+<<>> data/slope_local/nolofotennz10_sz16-eslo13cnear-z16 : zoom = 16 16 ; n = 663552 * 5 kb/tile ; name = nolofotennz10_sz16-eslo13cnear-z16 ; format = png ; bounds = 13.0078125,67.875541346729449,19.3359375,69.037141712751975
+Deduplicated 0 tiles.
+<< data/slope_local/nolofotennz10_sz14_up_z15-eslo13cnear-z15 : zoom = 15 15 ; n = 165888 * 5 kb/tile ; name = nolofotennz10_sz14_up_z15-eslo13cnear-z15 ; format = png ; bounds = 13.0078125,67.875541346729449,19.3359375,69.037141712751975
+>> data/eslo_nolofotennz10 : zoom = 15 16 ; n = 829440 ; name = nolofotennz10_sz16-eslo13cnear-z16 ; format = png ; bounds = 13.0078125,67.875541346729449,19.3359375,69.037141712751975
+<< data/slope_local/nolofotennz10_sz12_up_z14-eslo4near-z14 : zoom = 14 14 ; n = 41472 * 2 kb/tile ; name = nolofotennz10_sz12_up_z14-eslo4near-z14 ; format = png ; bounds = 13.0078125,67.875541346729449,19.3359375,69.037141712751975
+>> data/eslo_nolofotennz10 : zoom = 14 16 ; n = 870912 ; name = nolofotennz10_sz16-eslo13cnear-z16 ; format = png ; bounds = 13.0078125,67.875541346729449,19.3359375,69.037141712751975
+<< data/slope_local/nolofotennz10_sz12_up_z13-eslo4near-z13 : zoom = 13 13 ; n = 10368 * 2 kb/tile ; name = nolofotennz10_sz12_up_z13-eslo4near-z13 ; format = png ; bounds = 13.0078125,67.875541346729449,19.3359375,69.037141712751975
+>> data/eslo_nolofotennz10 : zoom = 13 16 ; n = 881280 ; name = nolofotennz10_sz16-eslo13cnear-z16 ; format = png ; bounds = 13.0078125,67.875541346729449,19.3359375,69.037141712751975
+Meta update {'bounds': '13.00781,67.87554,19.33594,69.03714',
+ 'center': '16.17188,68.45634,13',
+ 'maxzoom': 16,
+ 'minzoom': 13,
+ 'type': 'baselayer'}
+Created: data/eslo_nolofotennz10
+add_white_z: inserted 190 tiles at z=10 (549..567 x 777..786)
+-rw-rw-r-- 1 $USER $USER 4,2G mars  18 03:21 data/eslo_nolofotennz10.mbtiles
+
+
+
+============================================================
+
+
+
+
+mamba activate maps ; python /home/$USER/mapproj/eslope/development/norway.py nolyngenz10 --locname 'Lyngen (Norway)' --reuse
+
+============================================================
+  Processing: nolyngenz10  (Lyngen (Norway))
+============================================================
+
+Reuse data/dtm_local/nolyngenz10_dtm.tif
+-rw-rw-r-- 1 $USER $USER 16G mars  16 06:17 data/dtm_local/nolyngenz10_dtm.tif
+/home/$USER/software/python/mamba/envs/maps/lib/python3.14/site-packages/osgeo/gdal.py:606: FutureWarning: Neither gdal.UseExceptions() nor gdal.DontUseExceptions() has been explicitly called. In GDAL 4.0, exceptions will be enabled by default.
+  warnings.warn(
+Center latitude: 69.72°, -s scale factor: 0.3466
+gdaldem slope --config GDAL_CACHEMAX 2048 --config GDAL_ENABLE_READ_WRITE_MUTEX NO  'data/dtm_local/nolyngenz10_dtm.tif' -co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS  'data/slope_local/nolyngenz10_slopes.tif' -s 0.346639307771431
+0...10...20...30...40...50...60...70...80...90...100 - done in 00:53:41.
+-rw-rw-r-- 1 $USER $USER 43G mars  18 00:38 data/slope_local/nolyngenz10_slopes.tif
+      gdalwarp -ot Byte \
+        -co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite  \
+        -t_srs EPSG:3857 -tr 2.388657133911758 -2.388657133911758 -r nearest \
+          -dstnodata 255  \
+        data/slope_local/nolyngenz10_slopes.tif data/slope_local/nolyngenz10_sz16.tif
+Creating output file that is 196608P x 180224L.
+Using internal nodata values (e.g. -9999) for image data/slope_local/nolyngenz10_slopes.tif.
+Processing nolyngenz10_slopes.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:09:34.
+      gdalwarp -r q3 -tr 9.554628535647032 -9.554628535647032 \
+        -co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolyngenz10_sz16.tif data/slope_local/nolyngenz10_sz14.tif
+Creating output file that is 49152P x 45056L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolyngenz10_sz16.tif.
+Copying nodata values from source data/slope_local/nolyngenz10_sz16.tif to destination data/slope_local/nolyngenz10_sz14.tif.
+Processing nolyngenz10_sz16.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:04:26.
+      gdalwarp -r q3 -tr 38.21851414258813 -38.21851414258813 \
+        -co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolyngenz10_sz14.tif data/slope_local/nolyngenz10_sz12.tif
+Creating output file that is 12288P x 11264L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolyngenz10_sz14.tif.
+Copying nodata values from source data/slope_local/nolyngenz10_sz14.tif to destination data/slope_local/nolyngenz10_sz12.tif.
+Processing nolyngenz10_sz14.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:13.
+      gdalwarp -r bilinear -tr 4.777314267823516 -4.777314267823516 \
+        -co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolyngenz10_sz14.tif data/slope_local/nolyngenz10_sz14_up_z15.tif
+Creating output file that is 98304P x 90112L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolyngenz10_sz14.tif.
+Copying nodata values from source data/slope_local/nolyngenz10_sz14.tif to destination data/slope_local/nolyngenz10_sz14_up_z15.tif.
+Processing nolyngenz10_sz14.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:02:01.
+      gdalwarp -r bilinear -tr 9.554628535647032 -9.554628535647032 \
+        -co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolyngenz10_sz12.tif data/slope_local/nolyngenz10_sz12_up_z14.tif
+Creating output file that is 49152P x 45056L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolyngenz10_sz12.tif.
+Copying nodata values from source data/slope_local/nolyngenz10_sz12.tif to destination data/slope_local/nolyngenz10_sz12_up_z14.tif.
+Processing nolyngenz10_sz12.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:28.
+      gdalwarp -r bilinear -tr 19.10925707129406 -19.10925707129406 \
+        -co COMPRESS=ZSTD -co PREDICTOR=2 -co ZSTD_LEVEL=3 -co TILED=YES -co blockXsize=1024 -co blockYsize=1024 -co BIGTIFF=YES -co SPARSE_OK=TRUE -co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -overwrite   \
+        data/slope_local/nolyngenz10_sz12.tif data/slope_local/nolyngenz10_sz12_up_z13.tif
+Creating output file that is 24576P x 22528L.
+Using internal nodata values (e.g. 255) for image data/slope_local/nolyngenz10_sz12.tif.
+Copying nodata values from source data/slope_local/nolyngenz10_sz12.tif to destination data/slope_local/nolyngenz10_sz12_up_z13.tif.
+Processing nolyngenz10_sz12.tif [1/1] : 0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:05.
+sed -e 's/nv \+0 \+0 \+0/nv  255 255 255/g' -e 's/nv \+#000000/nv #FFFFFF/g' '/home/$USER/mapproj/eslope/development/data/gdaldem-slope-eslo13cnear.clr'
+\
+      gdaldem color-relief data/slope_local/nolyngenz10_sz16.tif /tmp/gdaldem-slope-eslo13cnear.clr data/slope_local/nolyngenz10_sz16-eslo13cnear-z16.mbtiles \
+          -nearest_color_entry -co TILE_FORMAT=png8
+0...10  0...10...20...30...40...50...60...70...80...90...100 - done in 00:44:50.
+Step 1/4 completed in 2723.0 seconds
+sed -e 's/nv \+0 \+0 \+0/nv  255 255 255/g' -e 's/nv \+#000000/nv #FFFFFF/g' '/home/$USER/mapproj/eslope/development/data/gdaldem-slope-eslo13cnear.clr'
+\
+      gdaldem color-relief data/slope_local/nolyngenz10_sz14_up_z15.tif /tmp/gdaldem-slope-eslo13cnear.clr data/slope_local/nolyngenz10_sz14_up_z15-eslo13cnear-z15.mbtiles \
+          -nearest_color_entry -co TILE_FORMAT=png8
+0...10...20...30...40...50...60...70...80...90...100 - done in 00:06:30.
+Step 2/4 completed in 405.9 seconds
+sed -e 's/nv \+0 \+0 \+0/nv  255 255 255/g' -e 's/nv \+#000000/nv #FFFFFF/g' '/home/$USER/mapproj/eslope/development/data/gdaldem-slope-eslo4near.clr'
+\
+      gdaldem color-relief data/slope_local/nolyngenz10_sz12_up_z14.tif /tmp/gdaldem-slope-eslo4near.clr data/slope_local/nolyngenz10_sz12_up_z14-eslo4near-z14.mbtiles \
+          -nearest_color_entry -co TILE_FORMAT=png8
+0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:51.
+Step 3/4 completed in 57.5 seconds
+sed -e 's/nv \+0 \+0 \+0/nv  255 255 255/g' -e 's/nv \+#000000/nv #FFFFFF/g' '/home/$USER/mapproj/eslope/development/data/gdaldem-slope-eslo4near.clr'
+\
+      gdaldem color-relief data/slope_local/nolyngenz10_sz12_up_z13.tif /tmp/gdaldem-slope-eslo4near.clr data/slope_local/nolyngenz10_sz12_up_z13-eslo4near-z13.mbtiles \
+          -nearest_color_entry -co TILE_FORMAT=png8
+0...10...20...30...40...50...60...70...80...90...100 - done in 00:00:09.
+Step 4/4 completed in 18.9 seconds
+cp data/slope_local/nolyngenz10_sz16-eslo13cnear-z16.mbtiles data/eslo_nolyngenz10.mbtiles
+<<>> data/slope_local/nolyngenz10_sz16-eslo13cnear-z16 : zoom = 16 16 ; n = 541440 * 5 kb/tile ; name = nolyngenz10_sz16-eslo13cnear-z16 ; format = png ; bounds = 16.875,69.037137514092194,21.093750000000004,70.377849999999995
+Deduplicated 0 tiles.
+<< data/slope_local/nolyngenz10_sz14_up_z15-eslo13cnear-z15 : zoom = 15 15 ; n = 135168 * 5 kb/tile ; name = nolyngenz10_sz14_up_z15-eslo13cnear-z15 ; format = png ; bounds = 16.875,69.037137514092194,21.093750000000004,70.377849999999995
+>> data/eslo_nolyngenz10 : zoom = 15 16 ; n = 676608 ; name = nolyngenz10_sz16-eslo13cnear-z16 ; format = png ; bounds = 16.875,69.037137514092194,21.093750000000004,70.377849999999995
+<< data/slope_local/nolyngenz10_sz12_up_z14-eslo4near-z14 : zoom = 14 14 ; n = 33792 * 2 kb/tile ; name = nolyngenz10_sz12_up_z14-eslo4near-z14 ; format = png ; bounds = 16.875,69.037137514092194,21.093750000000004,70.377849999999995
+>> data/eslo_nolyngenz10 : zoom = 14 16 ; n = 710400 ; name = nolyngenz10_sz16-eslo13cnear-z16 ; format = png ; bounds = 16.875,69.037137514092194,21.093750000000004,70.377849999999995
+<< data/slope_local/nolyngenz10_sz12_up_z13-eslo4near-z13 : zoom = 13 13 ; n = 8448 * 2 kb/tile ; name = nolyngenz10_sz12_up_z13-eslo4near-z13 ; format = png ; bounds = 16.875,69.037137514092194,21.093749999999996,70.377849999999995
+>> data/eslo_nolyngenz10 : zoom = 13 16 ; n = 718848 ; name = nolyngenz10_sz16-eslo13cnear-z16 ; format = png ; bounds = 16.875,69.037137514092194,21.093750000000004,70.377849999999995
+Meta update {'bounds': '16.875,69.03518,21.09375,70.37785',
+ 'center': '18.98438,69.70652,13',
+ 'maxzoom': 16,
+ 'minzoom': 13,
+ 'type': 'baselayer'}
+Created: data/eslo_nolyngenz10
+add_white_z: inserted 156 tiles at z=10 (560..572 x 786..797)
+-rw-rw-r-- 1 $USER $USER 3,3G mars  18 01:48 data/eslo_nolyngenz10.mbtiles
+
+
