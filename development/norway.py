@@ -9,6 +9,12 @@ Usage from terminal (with live progress):
 Usage from Jupyter:
     from run_mapterhorn2eslo import mapterhorn2eslo, trr2tif
     mapterhorn2eslo('nolofotennz10', locname='Lofoten (Norway)', reuse=True)
+
+Initial download:
+```
+! wget https://download.mapterhorn.com/6-34-15.pmtiles -O data/dtm_local/noz6lofoten_trr.pmtiles
+! wget https://download.mapterhorn.com/6-35-14.pmtiles -O data/dtm_local/noz6lyngen_trr.pmtiles
+```
 """
 
 import argparse
