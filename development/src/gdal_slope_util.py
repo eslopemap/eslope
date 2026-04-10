@@ -160,6 +160,7 @@ def slope_mbt_5_zooms(src: str, dest='', reuse=False):
         15: 'eslo13cnear',
         14: 'eslo4near',
         13: 'eslo4near',
+        12: 'eslo2',
     }
     if os.path.exists(dest):
         if reuse:
@@ -169,6 +170,7 @@ def slope_mbt_5_zooms(src: str, dest='', reuse=False):
             os.remove(dest)
     slope_z14 = make_ovr(src=src, z=14, r='q3', reuse=reuse)
     slope_z12 = make_ovr(src=slope_z14, z=12, r='q3', reuse=reuse)
+    slope_z10 = make_ovr(src=slope_z12, z=10, r='q1', reuse=reuse)
     get_slope = {
         16: src,
         15: make_ovr(src=slope_z14, dest=slope_z14.replace('.tif', f'_up_z15.tif'),
@@ -177,13 +179,15 @@ def slope_mbt_5_zooms(src: str, dest='', reuse=False):
                             z=14, r='bilinear', reuse=reuse),
         13: make_ovr(src=slope_z12, dest=slope_z12.replace('.tif', f'_up_z13.tif'),
                             z=13, r='bilinear', reuse=reuse),
+        12: make_ovr(src=slope_z10, dest=slope_z10.replace('.tif', f'_up_z12.tif'),
+                            z=12, r='bilinear', reuse=reuse),
     }
     files=[]
     for i, (z, cname) in enumerate(zooms.items()):
         chkpoint = time()
         to_merge = slope_mbt(cname, z=z, src=get_slope[z], reuse=reuse)
         files.append(os.path.expanduser(to_merge))
-        print(f'Step {i+1}/{len(zooms)} completed in {round(time()-chkpoint,1)} seconds')
+        print(f'Zoom {z} ({i+1}/{len(zooms)}) completed in {round(time()-chkpoint,1)} seconds')
 
     mbt_merge(*files, dest=dest)
     add_white_z(dest, z=10)
@@ -250,7 +254,7 @@ def add_white_z(mbt: str, z=10, border_px=10):
     print(f'add_white_z: inserted {n} tiles at z={z} ({x_west}..{x_east} x {y_south}..{y_north})')
 
 
-def eslo_tiny(path: str, cname='eslo13bnear', res=0, where='/tmp', reuse=False):
+def eslo_tiny(path: str, cname='eslo13cnear', res=0, where='/tmp', reuse=False):
     """For quick overviews. If file is big, use eg res=200. Detects `slope` in file name"""
     is_slope = 'slope' in os.path.basename(path)  # already a slope
     if res:
